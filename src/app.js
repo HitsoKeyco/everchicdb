@@ -28,13 +28,13 @@ app.get('/', (req, res) => {
 
 
 // ----------------server whatsapp---------------------
-initializeWhatsAppClient()
-    .then(() => {        
-        sendMessage();
-    })
-    .catch(err => {
-        console.error('Error al inicializar el cliente de WhatsApp:', err);
-    });
+// initializeWhatsAppClient()
+//     .then(() => {        
+//         sendMessage();
+//     })
+//     .catch(err => {
+//         console.error('Error al inicializar el cliente de WhatsApp:', err);
+//     });
 
 
 // middlewares después de las rutas

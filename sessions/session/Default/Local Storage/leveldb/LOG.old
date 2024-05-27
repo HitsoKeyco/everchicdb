@@ -1,2 +1,3 @@
-2024/05/27-00:39:44.973 1c08 Creating DB F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb since it was missing.
-2024/05/27-00:39:44.976 1c08 Reusing MANIFEST F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb/MANIFEST-000001
+2024/05/27-00:53:26.219 6c3c Reusing MANIFEST F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb/MANIFEST-000001
+2024/05/27-00:53:26.219 6c3c Recovering log #3
+2024/05/27-00:53:26.219 6c3c Reusing old log F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb/000003.log 

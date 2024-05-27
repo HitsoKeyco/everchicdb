@@ -14,7 +14,7 @@ const main = async () => {
         console.log(`Server running on port ${PORT}`);
 
         const PORT_CHAT = process.env.PORT_CHAT || 3001;
-        serverChat(app, PORT_CHAT);
+        // serverChat(app, PORT_CHAT);
         
     } catch (error) {
         console.log(error)
