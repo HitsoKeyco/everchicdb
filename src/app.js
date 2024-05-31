@@ -31,13 +31,14 @@ app.get('/', (req, res) => {
 initializeWhatsAppClient()
     .then(() => {        
         sendMessage();
+        console.log('Se envio el mensaje');
     })
     .catch(err => {
         console.error('Error al inicializar el cliente de WhatsApp:', err);
     });
 
 
-// middlewares después de las rutas
+//middlewares después de las rutas
 app.use(errorHandler)
 
 module.exports = { app };

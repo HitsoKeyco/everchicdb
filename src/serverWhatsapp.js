@@ -15,14 +15,14 @@ const server = app.listen(PORT, () => {
 
 const io = socketIo(server, {
     cors: {
-        origin: ['https://www.everchic.ec/admin/'],
+        origin: ['http://localhost:3000'],
         methods: ['GET', 'POST']
     }
 });
 
 // Función para inicializar el cliente de WhatsApp
-// Función para inicializar el cliente de WhatsApp
 const initializeWhatsAppClient = () => {
+    
     return new Promise((resolve, reject) => {
         client = new Client({
             authStrategy: new LocalAuth({

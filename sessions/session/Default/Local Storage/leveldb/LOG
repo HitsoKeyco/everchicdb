@@ -1,3 +1,3 @@
-2024/05/31-11:24:41.608 4c80 Reusing MANIFEST F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb/MANIFEST-000001
-2024/05/31-11:24:41.609 4c80 Recovering log #22
-2024/05/31-11:24:41.609 4c80 Reusing old log F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb/000022.log 
+2024/05/31-13:24:34.404 5938 Reusing MANIFEST F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb/MANIFEST-000001
+2024/05/31-13:24:34.408 5938 Recovering log #3
+2024/05/31-13:24:34.408 5938 Reusing old log F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\Local Storage\leveldb/000003.log 
