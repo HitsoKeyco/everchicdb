@@ -1,6 +1,5 @@
 node_modules
 sessions
-.env
-
+.env.example
 bin
 uploads 
