@@ -1,2 +1,2 @@
-[0527/011001.036:INFO:CONSOLE(215)] "Another connection wants to delete database 'wawc'. Closing db now to resume the delete request.", source: https://web.whatsapp.com/serviceworker.js (215)
-[0527/011001.036:INFO:CONSOLE(215)] "Another connection wants to delete database 'wawc'. Closing db now to resume the delete request.", source: https://web.whatsapp.com/serviceworker.js (215)
+[0531/105750.783:INFO:CONSOLE(131)] "Event handler of 'x-storagemutated-1' event must be added on the initial evaluation of worker script.", source: https://static.whatsapp.net/rsrc.php/v3/y_/r/ml_MQNnS1eu.js?_nc_x=Ij3Wp8lg5Kz (131)
+[0531/105753.727:INFO:CONSOLE(131)] "Event handler of 'x-storagemutated-1' event must be added on the initial evaluation of worker script.", source: https://static.whatsapp.net/rsrc.php/v3/y_/r/ml_MQNnS1eu.js?_nc_x=Ij3Wp8lg5Kz (131)

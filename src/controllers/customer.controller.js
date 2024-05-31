@@ -37,7 +37,6 @@ const update = catchError(async (req, res) => {
 });
 
 const searchCustomers = catchError(async (req, res) => {
-    console.log(req.query);
     const { searchText } = req.query; // Obtén el término de búsqueda desde la consulta
     // Realiza una búsqueda en la base de datos por nombre, apellido, empresa, etc. usando el término de búsqueda
     const results = await Customer.findAll({

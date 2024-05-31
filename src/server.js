@@ -4,6 +4,7 @@ const serverChat = require('./serverChat');
 const sequelize = require('./utils/connection');
 
 require("./models")
+
 const PORT = process.env.PORT || 8080;
 
 const main = async () => {
@@ -15,6 +16,7 @@ const main = async () => {
 
         const PORT_CHAT = process.env.PORT_CHAT || 3001;
         // serverChat(app, PORT_CHAT);
+        
         
     } catch (error) {
         console.log(error)

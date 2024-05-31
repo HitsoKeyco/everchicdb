@@ -7,8 +7,7 @@ const verifyJWT = (req, res, next) => {
         return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const token = authHeader.split(' ')[1];
-    console.log(token);
+    const token = authHeader.split(' ')[1];    
     
     jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
         if (err) {

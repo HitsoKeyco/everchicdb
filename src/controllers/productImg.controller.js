@@ -2,7 +2,7 @@ const catchError = require('../utils/catchError');
 const ProductImg = require('../models/ProductImg');
 const fs = require("fs")
 const path = require("path");
-const { log } = require('console');
+
 
 const getAll = catchError(async (req, res) => {
     const result = await ProductImg.findAll()
@@ -10,11 +10,13 @@ const getAll = catchError(async (req, res) => {
 });
 
 const create = catchError(async (req, res) => {
-    const { filename } = req.file
-    const url = `${req.protocol}://${req.headers.host}/uploads/${filename}`
-    const result = await ProductImg.create({ filename, url })
-    return res.status(201).json(result)
-})
+    const { filename } = req.file;
+    // Construye la URL usando HTTPS en lugar de req.protocol
+    const url = `https://${req.headers.host}/uploads/${filename}`;
+    const result = await ProductImg.create({ filename, url });
+    return res.status(201).json(result);
+});
+
 
 
 const removeImages = catchError(async (req, res) => {

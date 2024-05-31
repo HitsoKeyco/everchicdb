@@ -1,7 +1,12 @@
 const catchError = require('../utils/catchError');
 const Admin = require('../models/Admin');
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const { initializeWhatsAppClient, client } = require('../serverWhatsapp');
+const qrcode = require('qrcode-terminal');
+
+
+
 
 const getAll = catchError(async(req, res) => {
     const results = await Admin.findAll();
@@ -59,6 +64,33 @@ const login = catchError(async (req, res) => {
     return res.json( { admin, token } )
 })
 
+// Función para generar el código QR
+const generateQRCode = async () => {
+    return new Promise((resolve, reject) => {
+        client.on('qr', qr => {
+            qrcode.generate(qr, { small: true }, (qrImage) => {
+                resolve(qrImage);
+            });
+        });
+    });
+};
+
+
+const getQrCode = catchError(async (req, res) => {
+    try {
+        // Verificamos si el cliente de WhatsApp está inicializado
+        if (!client) {
+            // Si no está inicializado, lo inicializamos
+            await initializeWhatsAppClient();
+        }
+        // Generamos el código QR
+        const qr = await generateQRCode();
+        res.send(qr);
+    } catch (error) {
+        console.error('Error al generar el código QR:', error);
+        res.status(500).send('Error al generar el código QR');
+    }
+});
 
 
 module.exports = {
@@ -67,5 +99,6 @@ module.exports = {
     getOne,
     remove,
     update,
-    login
+    login,
+    getQrCode,
 }

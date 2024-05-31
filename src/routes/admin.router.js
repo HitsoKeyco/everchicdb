@@ -1,4 +1,4 @@
-const { getAll, create, getOne, remove, update, login,  } = require('../controllers/admin.controller');
+const { getAll, create, getOne, remove, update, login, getQrCode  } = require('../controllers/admin.controller');
 const express = require('express');
 const { verifyJWT } = require('../utils/VerifyJWT');
 
@@ -10,6 +10,8 @@ routerAdmin.route('/')
     
 routerAdmin.route('/login')
     .post(login)
+routerAdmin.route('/qr_code')
+    .get(getQrCode)
 
 routerAdmin.route('/:id')
     .get(getOne)

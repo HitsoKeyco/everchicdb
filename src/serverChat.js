@@ -8,7 +8,7 @@ function serverChat(app, PORT) {
 
     const io = socketIo(server, {
         cors: {
-            origin: ['http://localhost:5173', 'http://localhost:3000'], // Lista de orígenes permitidos
+            origin: ['http://localhost:5173', 'https://everchic.ec/admin/'], // Lista de orígenes permitidos
             methods: ['GET', 'POST'] // Métodos permitidos para la solicitud CORS
         }
     });

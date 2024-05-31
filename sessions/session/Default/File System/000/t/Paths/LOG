@@ -1,2 +1,4 @@
-2024/05/27-00:39:50.682 fb0 Creating DB F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\File System\000\t\Paths since it was missing.
-2024/05/27-00:39:50.688 fb0 Reusing MANIFEST F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\File System\000\t\Paths/MANIFEST-000001
+2024/05/28-07:42:57.397 77f0 Creating DB F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\File System\000\t\Paths since it was missing.
+2024/05/28-07:42:57.401 77f0 Reusing MANIFEST F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\File System\000\t\Paths/MANIFEST-000001
+2024/05/28-07:42:57.401 77f0 Recovering log #3
+2024/05/28-07:42:57.401 77f0 Reusing old log F:\Proyect everchic\ecommerce-api-db\sessions\session\Default\File System\000\t\Paths/000003.log 

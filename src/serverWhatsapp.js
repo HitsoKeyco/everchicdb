@@ -1,10 +1,26 @@
-// whatsapp.js
-
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const qrcode = require('qrcode');
+const express = require('express');
+const socketIo = require('socket.io');
+
+const app = express();
+const PORT = process.env.PORT_CHAT_WHATSAPP;
 
 let client;
 
+// Inicialización del servidor Express y Socket.IO
+const server = app.listen(PORT, () => {
+    console.log(`Server Whatsapp ${PORT}`);
+});
+
+const io = socketIo(server, {
+    cors: {
+        origin: ['http:'],
+        methods: ['GET', 'POST']
+    }
+});
+
+// Función para inicializar el cliente de WhatsApp
 // Función para inicializar el cliente de WhatsApp
 const initializeWhatsAppClient = () => {
     return new Promise((resolve, reject) => {
@@ -19,14 +35,19 @@ const initializeWhatsAppClient = () => {
         });
 
         // Evento para escuchar cuando el cliente esté listo
-        client.on('ready', () => {
+        client.on('ready', async () => {
             console.log('Cliente de WhatsApp listo!');
             resolve();
         });
 
-        // Evento para mostrar el código QR
-        client.on('qr', qr => {
-            qrcode.generate(qr, { small: true });
+        // Evento para escuchar cuando se genera un nuevo código QR
+        client.on('qr', async qr => {
+            try {
+                const qrDataURL = await qrcode.toDataURL(qr, { errorCorrectionLevel: 'H' });
+                io.emit('qrCode', qrDataURL);
+            } catch (error) {
+                console.error('Error al generar el código QR:', error);
+            }
         });
 
         // Evento para manejar errores
@@ -40,13 +61,15 @@ const initializeWhatsAppClient = () => {
     });
 };
 
+
 // Función para enviar un mensaje
 const sendMessage = async (phone, message) => {
-    console.log(phone,message);
     try {
-        if(phone, message){
+        if (phone && message) {
             await client.sendMessage(phone, message);
             console.log('Mensaje enviado con éxito');
+        } else {
+            console.error('El número de teléfono o el mensaje están vacíos');
         }
     } catch (error) {
         console.error('Error al enviar el mensaje:', error);
