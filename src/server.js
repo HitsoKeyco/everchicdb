@@ -13,7 +13,7 @@ const main = async () => {
         console.log("DB connected");
         app.listen(PORT);
         console.log(`Server running on port ${PORT}`);
-
+        console.log('Actualizado')
         const PORT_CHAT = process.env.PORT_CHAT || 3001;
         // serverChat(app, PORT_CHAT);
         
