@@ -24,7 +24,7 @@ const io = socketIo(server, {
 const initializeWhatsAppClient = () => {
     
     return new Promise((resolve, reject) => {
-        client = new Client({
+        const client = new Client({
             authStrategy: new LocalAuth({
                 dataPath: "sessions",
             }),
@@ -32,11 +32,18 @@ const initializeWhatsAppClient = () => {
                 type: 'remote',
                 remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
             },
-            args:[
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',               
-            ]
+            puppeteer: {
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu'
+                ]
+            }
         });
 
         // Evento para escuchar cuando el cliente esté listo
