@@ -17,8 +17,19 @@ app.use(express.json());
 app.use(helmet({
     crossOriginResourcePolicy: false,
 }));
-app.use(cors());
+
+//para poder acceder desde mi localhost
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.static(path.join(__dirname, 'public')))
+
+
+
 
 app.use('/api/v1', router);
 

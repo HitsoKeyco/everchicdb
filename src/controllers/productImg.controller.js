@@ -12,7 +12,7 @@ const getAll = catchError(async (req, res) => {
 const create = catchError(async (req, res) => {
     const { filename } = req.file;
     // Construye la URL usando HTTPS en lugar de req.protocol
-    const url = `http://${req.headers.host}/uploads/${filename}`;
+    const url = `https://${req.headers.host}/uploads/${filename}`;
     const result = await ProductImg.create({ filename, url });
     return res.status(201).json(result);
 });
