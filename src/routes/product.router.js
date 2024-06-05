@@ -1,12 +1,15 @@
-const { getAll, create, getOne, remove, softDelete, update, setImage, setSizes, setTags, getOneProductOrder } = require('../controllers/product.controller');
+const { getAll, create, getOne, remove, softDelete, update, setImage, setSizes, setTags, getOneProductOrder, getNewProduct } = require('../controllers/product.controller');
 const express = require('express');
 const { verifyJWT } = require('../utils/VerifyJWT');
 
 const routerProduct = express.Router();
 
-routerProduct.route('/')
+routerProduct.route('/')    
     .get(getAll)
     .post(create) //🔒
+    
+routerProduct.route('/new_product')
+    .get(getNewProduct)
 
 routerProduct.route('/:id')
     .get(getOneProductOrder)

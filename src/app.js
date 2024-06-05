@@ -19,18 +19,18 @@ app.use(helmet({
 }));
 
 
-// Configuración de CORS
-// app.use(cors({
-//     origin: ['https://www.everchic.ec/api/v1', 'http://localhost:3000'], // Permite solicitudes solo desde este dominio
-//     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
-//     allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
-//     credentials: true // Permite enviar cookies de autenticación
-// }));
+//Configuración de CORS
+app.use(cors({
+    origin: ['https://www.everchic.ec/api/v1', 'http://localhost:3000'], // Permite solicitudes solo desde este dominio
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
+    allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
+    credentials: true // Permite enviar cookies de autenticación
+}));
 
 app.use(cors())
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api/v1', router);
+app.use('', router);
 
 app.get('/', (req, res) => {
     return res.send("Welcome to express!");

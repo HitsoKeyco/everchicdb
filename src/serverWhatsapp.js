@@ -15,7 +15,7 @@ const server = app.listen(PORT, () => {
 
 const io = socketIo(server, {
     cors: {
-        origin: ['http://localhost:3000'],//www.everchic.ec
+        origin: ['www.everchic.ec'],//www.everchic.ec
         methods: ['GET', 'POST']
     }
 });

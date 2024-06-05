@@ -49,6 +49,17 @@ const getOne = catchError(async (req, res) => {
     return res.json(result);
 });
 
+const getNewProduct = catchError(async (req, res) => {
+    //encontrar productos donde tenga la columna new_products igual a true    
+    const result = await Product.findAll({
+        where: {
+            new_product: true
+            },
+            include: [Category, ProductImg, Tag, Supplier, Size, Collection]
+            });
+            return res.json(result);
+})
+
 const getOneProductOrder = catchError(async (req, res) => {
     const { id } = req.params;
     const result = await Product.findByPk(id, { include: [Category, ProductImg, Size, Collection] });
@@ -187,5 +198,6 @@ module.exports = {
     update,
     setImage,
     setSizes,
-    setTags
+    setTags,
+    getNewProduct
 }

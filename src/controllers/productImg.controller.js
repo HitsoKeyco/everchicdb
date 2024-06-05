@@ -2,6 +2,7 @@ const catchError = require('../utils/catchError');
 const ProductImg = require('../models/ProductImg');
 const fs = require("fs")
 const path = require("path");
+const { log } = require('console');
 
 
 const getAll = catchError(async (req, res) => {
@@ -12,6 +13,7 @@ const getAll = catchError(async (req, res) => {
 
 const create = catchError(async (req, res) => {
     const { filename } = req.file
+    
     const url = `${req.protocol}://${req.headers.host}/uploads/${filename}`
     const result = await ProductImg.create({ filename, url })
     return res.status(201).json(result)
