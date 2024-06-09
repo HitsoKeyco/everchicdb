@@ -51,6 +51,10 @@ const User = sequelize.define('user', {
     verificationToken: { // Agrega este campo para el token de verificación
         type: DataTypes.STRING,
         allowNull: true // Puede ser nulo temporalmente hasta que se asigne un token ojo
+    },
+    rol: {
+        type: DataTypes.STRING,        
+        defaultValue: 'client'
     }
 });
 

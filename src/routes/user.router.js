@@ -1,4 +1,4 @@
-const { getOne, getAll, create, remove, update, login, verifyEmail, recoverPassword, updatePassword, getLikes, createLike, deleteLike } = require('../controllers/user.controller');
+const { getOne, getAll, create, remove, update, login, verifyEmail, recoverPassword, updatePassword, getLikes, createLike, deleteLike, resendVerification } = require('../controllers/user.controller');
 const express = require('express');
 const { verifyJWT } = require('../utils/VerifyJWT');
 
@@ -19,6 +19,9 @@ routerUser.route('/recover_account')
 routerUser.route('/update_password')
     .post(updatePassword)
 
+//Ruta Reenvio de email de verificación
+routerUser.route('/resend_email')
+    .post(resendVerification)
 
 //Ruta usuarios crear / eliminar like a productos
 routerUser.route('/like_product')    

@@ -26,13 +26,14 @@ const routerOrderItem = require('./OrderItem.router');
 const router = express.Router();
 
 
-router.use("/users", routerUser)
-router.use("/admin", routerAdmin)
+router.use("/users", routerUser)    
+router.use("/admin", routerAdmin)   
 router.use("/categories", routerCategory)
 router.use("/products", routerProduct)
 router.use("/product_images", routerProductImg)
 router.use("/collections", routerCollection)
 router.use("/message", routerChatMessage)
+
 router.use("/orders", routerOrder)
 router.use("/orders_status", routerOrderStatus)
 router.use("/orders_items", routerOrderItem)
