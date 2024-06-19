@@ -5,9 +5,9 @@ const { verifyJWT } = require('../utils/VerifyJWT');
 const routerProduct = express.Router();
 
 routerProduct.route('/')    
-    .get(getAll)
+    .get(getAll)    
     .post(create) //🔒
-    
+   
 routerProduct.route('/new_product')
     .get(getNewProduct)
 

@@ -23,19 +23,28 @@ const getbyCategory = catchError(async (req, res) => {
 
 
 const getAll = catchError(async (req, res) => {
-    const { category } = req.query;
+    const { page = 1, limit = 1 } = req.query;
     const where = { deleted_at: null }; // Excluye los productos eliminados
-    if (category) {
-        where.categoryId = category;
-    }
 
-    const results = await Product.findAll({
+    const offset = (page - 1) * limit;  //calculo del indice a recuperar por pagina
+    const results = await Product.findAndCountAll({
         include: [Category, ProductImg, Tag, Size, Collection],
-        where
+        where,
+        offset, //indice desde donde se contaran los elementos
+        limit  // cantidad de elementos qye se traeran desde el indice offset
     });
 
-    return res.json(results);
+    //count cantidad en valor numerico de elementos, rows elementos del arreglo
+    const { count, rows } = results;
+
+    return res.json({
+        total: count,
+        currentPage: page,
+        totalPages: Math.ceil(count / limit) - 1,
+        products: rows
+    });
 });
+
 
 const create = catchError(async (req, res) => {
     const result = await Product.create(req.body);
@@ -43,7 +52,7 @@ const create = catchError(async (req, res) => {
 });
 
 const getOne = catchError(async (req, res) => {
-    const { id } = req.params;    
+    const { id } = req.params;
     const result = await Product.findByPk(id, { include: [Category, ProductImg, Tag, Supplier, Size, Collection] });
     if (!result) return res.sendStatus(404);
     return res.json(result);
@@ -54,16 +63,16 @@ const getNewProduct = catchError(async (req, res) => {
     const result = await Product.findAll({
         where: {
             new_product: true
-            },
-            include: [Category, ProductImg, Tag, Supplier, Size, Collection]
-            });
-            return res.json(result);
+        },
+        include: [Category, ProductImg, Tag, Supplier, Size, Collection]
+    });
+    return res.json(result);
 })
 
 const getOneProductOrder = catchError(async (req, res) => {
     const { id } = req.params;
     const result = await Product.findByPk(id, { include: [Category, ProductImg, Size, Collection] });
-    if (!result) return res.sendStatus(404);      
+    if (!result) return res.sendStatus(404);
     return res.json(result);
 })
 
@@ -74,8 +83,8 @@ const remove = catchError(async (req, res) => {
     const result = await sequelize.transaction(async (t) => {
         // Eliminar imágenes y tags asociadas al producto
         await ProductImg.destroy({ where: { productId: id }, transaction: t });
-        await ProductTag.destroy({ where: { productId: id }, transaction: t });        
-        
+        await ProductTag.destroy({ where: { productId: id }, transaction: t });
+
 
         // Eliminar el producto principal
         const deleteProductResult = await Product.destroy({ where: { id }, transaction: t });

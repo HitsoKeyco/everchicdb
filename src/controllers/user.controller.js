@@ -180,7 +180,7 @@ const create = catchError(async (req, res) => {
 															<td class="pad">
 																<h1
 																	style="margin: 0; color: #000000; direction: ltr; font-family: 'Roboto', Tahoma, Verdana, Segoe, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: normal; line-height: 120%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 31.2px;">
-																	<span class="tinyMce-placeholder">Bienvenido a
+																	<span class="tinyMce-placeholder">Bienvenido/a a
 																		Everchic</span>
 																</h1>
 															</td>
@@ -509,7 +509,7 @@ const resendVerification = catchError(async (req, res) => {
     // Configuramos las opciones del correo
     const mailOptions = {
         to: email,
-        subject: 'Activacion de cuenta - Everchic',
+        subject: 'Activación de cuenta - Everchic',
         html: `
         <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
@@ -636,7 +636,7 @@ const resendVerification = catchError(async (req, res) => {
 															<td class="pad">
 																<h1
 																	style="margin: 0; color: #000000; direction: ltr; font-family: 'Roboto', Tahoma, Verdana, Segoe, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: normal; line-height: 120%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 31.2px;">
-																	<span class="tinyMce-placeholder">Bienvenido a
+																	<span class="tinyMce-placeholder">Bienvenido/a a
 																		Everchic</span>
 																</h1>
 															</td>

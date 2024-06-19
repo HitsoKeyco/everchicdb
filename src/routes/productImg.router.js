@@ -6,7 +6,10 @@ const routerProductImg = express.Router();
 
 routerProductImg.route('/')
     .get(getAll)
-    .post(upload.single('image'), create);
+    .post(upload.fields([
+        { name: 'smallImage', maxCount: 1 },
+        { name: 'mediumImage', maxCount: 1 }
+    ]), create);
 
 routerProductImg.route("/:id")
     .put(update) // Agregamos la referencia al controlador de actualización

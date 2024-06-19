@@ -33,7 +33,6 @@ router.use("/products", routerProduct)
 router.use("/product_images", routerProductImg)
 router.use("/collections", routerCollection)
 router.use("/message", routerChatMessage)
-
 router.use("/orders", routerOrder)
 router.use("/orders_status", routerOrderStatus)
 router.use("/orders_items", routerOrderItem)

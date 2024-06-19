@@ -1,5 +1,10 @@
 const catchError = require('../utils/catchError');
 const Category = require('../models/Category');
+const Product = require('../models/Product');
+const ProductImg = require('../models/ProductImg');
+const Tag = require('../models/Tag');
+const Size = require('../models/Size');
+const Collection = require('../models/Collection');
 
 const getAll = catchError(async (req, res) => {
     const results = await Category.findAll();
@@ -10,6 +15,51 @@ const create = catchError(async (req, res) => {
     const result = await Category.create(req.body);
     return res.status(201).json(result);
 });
+
+
+// Buscar por categoria con paginacion
+const getByCategory = catchError(async (req, res) => {
+    const { categoryId, page = 1, limit = 1 } = req.query;
+    if (!categoryId) {
+        return res.status(400).json({ error: 'categoryId is required' });
+    }
+
+    const where = { categoryId: categoryId, deleted_at: null }; // Excluye los productos eliminados
+    const offset = (page - 1) * limit; // Calculo del indice a
+
+    try {
+        const results = await Product.findAndCountAll({
+            include: [Category, ProductImg, Tag, Size, Collection],
+            where,
+            offset, // Indice desde donde se contaran los elementos
+            limit // Cantidad de elementos que se traeran desde el indice offset
+        });
+
+        // Contar cantidad en valor numerico de elementos, rows elementos del arreglo
+        const { count, rows } = results;
+
+        // Calcular el número total de páginas
+        const totalPages = Math.ceil(count / parseInt(limit));
+        console.log(count, rows, limit);
+        // Si la página solicitada excede el total de páginas, retornar un error
+        if (page > totalPages && totalPages > 0) {
+            return res.status(404).json({ error: 'Page not found' });
+        }
+
+        return res.json({
+            total: count,
+            currentPage: parseInt(page),
+            totalPages: totalPages,
+            products: rows
+        });
+    } catch (error) {
+        console.error('Error al obtener productos por categoría:', error);
+        return res.status(500).json({ error: 'Error al obtener productos por categoría' });
+    }
+});
+
+
+
 
 const remove = catchError(async (req, res) => {
     const { id } = req.params;
@@ -32,5 +82,7 @@ module.exports = {
     getAll,
     create,
     remove,
-    update
+    update,
+    getByCategory,
+    
 }
