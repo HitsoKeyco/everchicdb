@@ -1,4 +1,4 @@
-const { getAll, create, getOne, remove, update, login, getQrCode  } = require('../controllers/admin.controller');
+const { getAll, create, getOne, remove, update, login, getQrCode, logOutWhatsapp, getStatusClient  } = require('../controllers/admin.controller');
 const express = require('express');
 const { verifyJWT } = require('../utils/VerifyJWT');
 
@@ -10,8 +10,15 @@ routerAdmin.route('/')
     
 routerAdmin.route('/login')
     .post(login)
+
 routerAdmin.route('/qr_code')
     .get(getQrCode)
+    
+routerAdmin.route('/client_whatsapp')
+    .get(getStatusClient)
+
+routerAdmin.route('/logout_session_whatsapp')
+    .post(logOutWhatsapp)
 
 routerAdmin.route('/:id')
     .get(getOne)

@@ -7,7 +7,13 @@ const findUserByVerificationToken = async (verificationToken) => {
     try {
         // Realiza la consulta a la base de datos para encontrar al usuario con el token de verificación proporcionado
         const user = await User.findOne({ where: { verificationToken: verificationToken } });
-        return user; // Retorna el usuario encontrado (o null si no se encontró ningún usuario)
+        //verificar si el token aun es valido 
+        if (user && user.verificationTokenExpires > Date.now()) {
+            return user;
+        } else {
+            return null;
+        }
+
     } catch (error) {
         console.error('Error al buscar al usuario por el token de verificación:', error);
         throw new Error('Error al buscar al usuario por el token de verificación');

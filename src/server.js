@@ -1,6 +1,7 @@
 
 const { app } = require('./app');
-const serverChat = require('./serverChat');
+const { initializeWhatsAppClient } = require('./serverWhatsapp');
+
 const sequelize = require('./utils/connection');
 
 require("./models")
@@ -9,15 +10,11 @@ const PORT = process.env.PORT;
 
 const main = async () => {
     try {
-        sequelize.sync({alter:true});
+        sequelize.sync();
         console.log("DB connected");
         app.listen(PORT);
         console.log(`Server running on port ${PORT}`);        
-        const PORT_CHAT = process.env.PORT_CHAT || 3001;
-
-        // serverChat(app, PORT_CHAT);
-        
-        
+        await initializeWhatsAppClient()
     } catch (error) {
         console.log(error)
     }

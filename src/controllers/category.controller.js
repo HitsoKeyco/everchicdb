@@ -49,7 +49,7 @@ const getByCategory = catchError(async (req, res) => {
         return res.json({
             total: count,
             currentPage: parseInt(page),
-            totalPages: totalPages,
+            totalPages:  Math.ceil(totalPages / parseInt(limit)),
             products: rows
         });
     } catch (error) {

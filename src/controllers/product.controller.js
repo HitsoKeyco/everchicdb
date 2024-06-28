@@ -40,7 +40,7 @@ const getAll = catchError(async (req, res) => {
     return res.json({
         total: count,
         currentPage: page,
-        totalPages: Math.ceil(count / limit) - 1,
+        totalPages: Math.ceil(count / limit),
         products: rows
     });
 });

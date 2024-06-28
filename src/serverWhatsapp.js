@@ -5,26 +5,26 @@ const socketIo = require('socket.io');
 
 const app = express();
 const PORT = process.env.PORT_CHAT_WHATSAPP;
-
-let client;
+let isClientReady;
+let client
 
 // Inicialización del servidor Express y Socket.IO
 const server = app.listen(PORT, () => {
-    console.log(`Server Whatsapp ${PORT}`);
+    console.log(`Server Socket.IO ${PORT}`);
 });
 
 const io = socketIo(server, {
     cors: {
-        origin: ['www.everchic.ec'],//www.everchic.ec
+        origin: ['www.everchic.ec', 'http://localhost:5000', 'http://localhost:3000'],//www.everchic.ec
         methods: ['GET', 'POST']
     }
 });
 
+
 // Función para inicializar el cliente de WhatsApp
 const initializeWhatsAppClient = () => {
-    
     return new Promise((resolve, reject) => {
-        const client = new Client({
+        client = new Client({
             authStrategy: new LocalAuth({
                 dataPath: "sessions",
             }),
@@ -49,6 +49,9 @@ const initializeWhatsAppClient = () => {
         // Evento para escuchar cuando el cliente esté listo
         client.on('ready', async () => {
             console.log('Cliente de WhatsApp listo!');
+            const stateConectionLog = true
+            io.emit('session_log', stateConectionLog);
+            isClientReady = true;
             resolve();
         });
 
@@ -64,14 +67,27 @@ const initializeWhatsAppClient = () => {
 
         // Evento para manejar errores
         client.on('auth_failure', err => {
+            isClientReady = false;
             console.error('Error de autenticación:', err);
             reject(err);
         });
+
+        // Evento para manejar desconexion
+        client.on('disconnected', (reason) => {
+            isClientReady = false;
+            const stateConectionLogOut = true
+            io.emit('session_logout', stateConectionLogOut);            
+            console.log('Client was logged out', reason);
+            
+        });
+
 
         // Inicializar el cliente
         client.initialize();
     });
 };
+
+
 
 
 // Función para enviar un mensaje
@@ -88,4 +104,33 @@ const sendMessage = async (phone, message) => {
     }
 };
 
-module.exports = { initializeWhatsAppClient, sendMessage };
+//funcion para validar el estadi de cliente log o logout
+const validateClientStatus = async () => {
+    if (isClientReady) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+const statusConecction = async () => {
+    return isClientReady;
+}
+
+// Función para destruir la sesión del cliente
+const destroySession = async () => {
+    try {
+        if (isClientReady) {
+            await client.logout();
+            isClientReady = false;
+            console.log('Client session destroyed successfully');
+        } else {
+            console.log('Client is not ready or not initialized');
+        }
+    } catch (error) {
+        console.error('Error al destruir la sesión:', error);
+    }
+};
+
+
+module.exports = { initializeWhatsAppClient, sendMessage, validateClientStatus, destroySession, statusConecction };

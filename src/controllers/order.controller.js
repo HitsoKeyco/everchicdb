@@ -6,10 +6,12 @@ const OrderItem = require('../models/OrderItem');
 const { sendMessage } = require('../serverWhatsapp');
 const { verify } = require('hcaptcha');
 const OrderStatus = require('../models/OrderStatus');
+const sequelize = require('../utils/connection');
+const { createUser } = require('../utils/createUser');
 
 const getAll = catchError(async (req, res) => {
     const results = await Order.findAll();
-    return res.status(200).json(results);   
+    return res.status(200).json(results);
 })
 
 
@@ -24,18 +26,16 @@ const getAllOrdersUser = catchError(async (req, res) => {
 
 
 const verifyCaptcha = async (req, res) => {
-    const { tokenCaptcha } = req.body;    
-    const SECRET_KEY = "ES_b968e2c005bc48e890670989c9b87eab"; // clave secreta de hCaptcha
-    const RESPONSE_TOKEN = tokenCaptcha; // Utilizamos el token recibido en la solicitud
+    const { tokenCaptcha } = req.body;
+    const SECRET_KEY = process.env.HCAPTCHA_SECRET
+    const RESPONSE_TOKEN = tokenCaptcha;
 
     try {
         const data = await verify(SECRET_KEY, RESPONSE_TOKEN);
 
         if (data.success) {
-            // El captcha es válido, puedes proceder con tu lógica aquí
             res.status(200).json({ message: 'Captcha válido. Formulario procesado correctamente.' });
         } else {
-            // El captcha no es válido
             res.status(400).json({ message: 'Error: Captcha inválido.' });
         }
     } catch (error) {
@@ -45,104 +45,114 @@ const verifyCaptcha = async (req, res) => {
 };
 
 
-
+// Tu función de creación
 
 const create = catchError(async (req, res) => {
-        const userData = req.body;        
+    const { newUser, newDataShipping, cart, cartFree, total } = req.body;
+    const dataUser = { ...newUser, ...newDataShipping };
+    let user;
+
     try {
+        await sequelize.transaction(async (transaction) => {
+            user = await User.findOne({ where: { email: dataUser.email }, transaction });
 
-        let user = await User.findOne({ where: { email: userData.email } });
-
-        if (!user) {
-            user = await User.create(userData);
-        }
-
-        const orderStatus = await OrderStatus.findOne({ where: { order_status: 'pendiente' } });
-        if (!orderStatus) {
-            throw new Error("El estado de orden 'pendiente' no existe");
-        }
-
-        const order = await Order.create({
-            userId: user.id,
-            adminId: null,
-            orderStatusId: orderStatus.id,
-            total: userData.total,
-            paid: false
-        });
-
-        for (const productData of userData.cart) {
-            const product = await Product.findByPk(productData.productId);
-            if (product) {
-                await OrderItem.create({
-                    orderId: order.id,
-                    productId: productData.productId,
-                    quantity: productData.quantity,
-                    price_unit: productData.priceUnit
-                });
+            if (user) {
+                await User.update(dataUser, { where: { id: user.id }, transaction });
+            } else {
+                user = await createUser(dataUser)
             }
-        }
 
-        if (userData.cartFree.length > 0) {
-            for (const productData of userData.cartFree) {
-                const product = await Product.findByPk(productData.productId);
+            const orderStatus = await OrderStatus.findOne({ where: { order_status: 'pendiente' }, transaction });
+            if (!orderStatus) {
+                throw new Error("El estado de orden 'pendiente' no existe");
+            }
+
+            const order = await Order.create({
+                userId: user.id,
+                adminId: null,
+                orderStatusId: orderStatus.id,
+                total: total,
+                paid: false
+            }, { transaction });
+
+            const orderItemsPromises = cart.map(async productData => {
+                const product = await Product.findByPk(productData.productId, { transaction });
                 if (product) {
-                    await OrderItem.create({
+                    return OrderItem.create({
+                        orderId: order.id,
+                        productId: productData.productId,
+                        quantity: productData.quantity,
+                        price_unit: productData.priceUnit
+                    }, { transaction });
+                }
+            });
+
+            const cartFreePromises = cartFree.map(async productData => {
+                const product = await Product.findByPk(productData.productId, { transaction });
+                if (product) {
+                    return OrderItem.create({
                         orderId: order.id,
                         productId: productData.productId,
                         quantity: productData.quantity,
                         price_unit: 0,
                         free: true
-                    });
+                    }, { transaction });
                 }
-            }
-        }
+            });
 
-        // Enviar mensaje
+            await Promise.all([...orderItemsPromises, ...cartFreePromises]);
+        });
+
+        // Enviar mensaje al usuario (no dentro de la transacción)
         try {
-            const number = user.phone_first
-            const cleanedNumber = number.slice(1);
-            const phone = `593${cleanedNumber}@c.us`
-            const message = `Hola ${userData.firstName}, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${userData.total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!
-            
-    🏦 *BANCO GUAYAQUIL*
-    *CTA ahorro: 27776464*            
-    👩🏻 GINA ALVARADO
-    *Cédula:* 0953412020
-    *Correo:* EverChic.sa@gmail.com
-            
-    🏦 *BANCO PICHINCHA*            
-    *CTA ahorro: 2203067894*
-    👩🏻 GINA ALVARADO
-    *Cédula:* 0953412020
-    *Correo:* everchic.sa@gmail.com
-            
-    🏦 *BANCO PACÍFICO*
-    *CTA ahorro: 1053508041*
-    👩🏻 GINA ALVARADO            
-    *Cédula: 0953412020*
-    *Correo:* everchic.sa@gmail.com
-            
-    🏦 *BANCO PRODUBANCO*
-    *CTA ahorro: 20059528697*
-    👩🏻 GINA ALVARADO            
-    *Cédula:* 0953412020
-    *Correo:* everchic.sa@gmail.com
+            if (user.phone_first || user.phone_second) {
+                const number = user.phone_first || user.phone_second;
+                const cleanedNumber = number.replace(/[^0-9]/g, ''); // Elimina cualquier caracter no numérico
+                const lastNineDigits = cleanedNumber.slice(-9); // Obtiene los últimos 9 dígitos
 
-    `;
+                const phone = `593${lastNineDigits}@c.us`;
+                const message = `Hola ${user.firstName}, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!
 
+🏦 *BANCO GUAYAQUIL*
+*CTA ahorro: 27776464*            
+👩🏻 GINA ALVARADO
+*Cédula:* 0953412020
+*Correo:* EverChic.sa@gmail.com
 
-            await sendMessage(phone, message);
-            console.log('Mensaje enviado');
+🏦 *BANCO PICHINCHA*            
+*CTA ahorro: 2203067894*
+👩🏻 GINA ALVARADO
+*Cédula:* 0953412020
+*Correo:* everchic.sa@gmail.com
+
+🏦 *BANCO PACÍFICO*
+*CTA ahorro: 1053508041*
+👩🏻 GINA ALVARADO            
+*Cédula: 0953412020*
+*Correo:* everchic.sa@gmail.com
+
+🏦 *BANCO PRODUBANCO*
+*CTA ahorro: 20059528697*
+👩🏻 GINA ALVARADO            
+*Cédula:* 0953412020
+*Correo:* everchic.sa@gmail.com
+`;
+                await sendMessage(phone, message);                
+            }
         } catch (error) {
-            console.log('No se ha podido enviar el mensaje');
+            console.error('No se ha podido enviar el mensaje:', error);
         }
-        // Paso 4: Retornar respuesta exitosa
+
         return res.status(200).json({ message: 'Orden creada exitosamente' });
     } catch (error) {
         console.error('Error al crear la orden:', error);
         return res.status(500).json({ message: 'Error al procesar la solicitud' });
     }
 });
+
+
+
+
 
 const getOne = catchError(async (req, res) => {
     const { id } = req.params;

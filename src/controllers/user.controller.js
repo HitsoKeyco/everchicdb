@@ -7,54 +7,54 @@ const generateVerificationToken = require('../utils/verifyToken');
 const saveVerificationToken = require('../utils/saveVerificationToken');
 const { findUserByVerificationToken } = require('../utils/findUserByVerificationToken');
 const ProductLike = require('../models/ProductLike');
-const fs = require('fs-extra')
-const path = require('path');
+
 
 const getAll = catchError(async (req, res) => {
-    const results = await User.findAll();
-    return res.json(results);
+	const results = await User.findAll();
+	return res.json(results);
 });
 
 // ------------Buscar datos de usuario ----------------
 const getOne = catchError(async (req, res) => {
-    const { id } = req.params;
-    const results = await User.findOne({ where: { id } });
-    return res.json(results);
+	const { id } = req.params;
+	const results = await User.findOne({ where: { id } });
+	return res.json(results);
 });
 
 
-const create = catchError(async (req, res) => {
-    const { firstName, lastName, email, password } = req.body;
-    const hashPassword = await bcrypt.hash(password, 10);
-    //Verificar si es que el usuario ya existe en la base de datos 
-    const userExist = await User.findOne({ where: { email, isVerify: false } });
-    if (userExist) {
-        return res.status(400).json({ message: 'Este email ya esta registrado, pero aun no verificado.' });
-    }
-    // Si isVerify es true retornar este usuario ya esta registrado
-    const userExistAndVerify = await User.findOne({ where: { email, isVerify: true } });
-    if (userExistAndVerify) {
-        return res.status(400).json({ message: 'Este email ya esta registrado y verificado, inicia sesión' });
-    }
+const createUser = catchError(async (req, res) => {
+	
+	const { dni, phone_first, phone_second, city, address, firstName, lastName, email, password } = req.body || req;
 
-    // Crear el usuario en la base de datos
-    const newUser = await User.create({ firstName, lastName, email, password: hashPassword, rol: 'client' });
+	const hashPassword = await bcrypt.hash(password, 10);
+	//Verificar si es que el usuario ya existe en la base de datos 
+	const userExist = await User.findOne({ where: { email, isVerify: false } });
+	if (userExist) {
+		return res.status(400).json({ message: 'Este email ya esta registrado, pero aun no verificado.' });
+	}
+	// Si isVerify es true retornar este usuario ya esta registrado
+	const userExistAndVerify = await User.findOne({ where: { email, isVerify: true } });
+	if (userExistAndVerify) {
+		return res.status(400).json({ message: 'Este email ya esta registrado y verificado, inicia sesión' });
+	}
 
-    // Generar un token de verificación único (utilice una librería como 'uuid' para esto)
-    const verificationToken = generateVerificationToken(); // Esta función debe ser implementada para generar un token único
+	// Crear el usuario en la base de datos
+	const newUser = await User.create({ dni, phone_first, phone_second, city, address, firstName, lastName, email, password: hashPassword, rol: 'client' });
 
-    // Guardar el token de verificación en la base de datos, asociado al usuario
-    await saveVerificationToken(newUser.id, verificationToken); // Esta función debe ser implementada
+	// Generar un token de verificación único (utilice una librería como 'uuid' para esto)
+	const verificationToken = generateVerificationToken(); // Esta función debe ser implementada para generar un token único
 
-    // Construir el enlace de verificación
-    //const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`; // Esta URL debe ser la URL de tu aplicación frontend    
-    const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`; // Esta URL debe ser la URL de tu aplicación frontend    
+	// Guardar el token de verificación en la base de datos, asociado al usuario
+	await saveVerificationToken(newUser.id, verificationToken); // Esta función debe ser implementada
 
-    // Configurar el correo electrónico
-    const mailOptions = {
-        to: email,
-        subject: 'Verificación de Correo Electrónico Everchic',
-        html: `
+	// Construir el enlace de verificación	
+	const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`; // Esta URL debe ser la URL de tu aplicación frontend    
+
+	// Configurar el correo electrónico
+	const mailOptions = {
+		to: email,
+		subject: 'Verificación de Correo Electrónico Everchic',
+		html: `
         <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
 
@@ -405,60 +405,84 @@ const create = catchError(async (req, res) => {
 
 </html>
         `
-    };
+	};
 
-    // Enviar el correo electrónico de verificación
-    sendEmail(mailOptions);
+	// Enviar el correo electrónico de verificación
+	sendEmail(mailOptions);
 
-    return res.status(201).json(newUser);
+	return res.status(201).json(newUser);
 });
 
 
 
 // Controlador para manejar la solicitud de verificación de correo electrónico
 const verifyEmail = catchError(async (req, res) => {
-    const { id } = req.params;
-    const user = await findUserByVerificationToken(id);
-    if (user) {
-        await markUserAsVerified(user.id);
-        res.sendStatus(200);
-    } else {
-        res.status(400).send('No se encontró un usuario con este token de verificación.');
+	const { id } = req.params;
+	const user = await findUserByVerificationToken(id);
+	if (user) {
+		await markUserAsVerified(user.id);
+		res.sendStatus(200);
+	} else {
+		res.status(400).send('No se encontró un usuario con este token de verificación.');
+	}
+});
+
+// Validar sesión del usuario si aún es válida con JWT
+const validateSession = catchError(async (req, res) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+        if (!decoded || !decoded.user) {
+            return res.status(401).json({ message: 'Invalid authentication token' });
+        }
+
+        // Si llegamos aquí, el token es válido
+        return res.status(200).json({ message: 'Session validated', user: decoded.user });
+    } catch (err) {
+        return res.status(401).json({ message: 'Invalid authentication token' });
     }
 });
 
+
 const markUserAsVerified = async (userId) => {
-    try {
-        // Actualiza el campo isVerify a true y elimina el token de verificación de la base de datos
-        await User.update({ isVerify: true, verificationToken: null }, { where: { id: userId } });
-    } catch (error) {
-        console.error('Error al marcar al usuario como verificado:', error);
-        throw new Error('Error al marcar al usuario como verificado');
-    }
+	try {
+		// Actualiza el campo isVerify a true y elimina el token de verificación de la base de datos
+		await User.update({ isVerify: true, verificationToken: null }, { where: { id: userId } });
+	} catch (error) {
+		console.error('Error al marcar al usuario como verificado:', error);
+		throw new Error('Error al marcar al usuario como verificado');
+	}
 };
 
 
 const remove = catchError(async (req, res) => {
-    const { id } = req.params;
-    const result = await User.destroy({ where: { id } });
-    if (!result) return res.sendStatus(404);
-    return res.sendStatus(204);
+	const { id } = req.params;
+	const result = await User.destroy({ where: { id } });
+	if (!result) return res.sendStatus(404);
+	return res.sendStatus(204);
 });
 
 
 
 const update = catchError(async (req, res) => {
-    const { id } = req.params;
-    //evita la actualizacion del email y el password
-    delete req.body.email
-    delete req.body.password
+	const { id } = req.params;
+	//evita la actualizacion del email y el password
+	delete req.body.email
+	delete req.body.password
 
-    const result = await User.update(
-        req.body,
-        { where: { id }, returning: true }
-    );
-    if (result[0] === 0) return res.sendStatus(404);
-    return res.json(result[1][0]);
+	const result = await User.update(
+		req.body,
+		{ where: { id }, returning: true }
+	);
+	if (result[0] === 0) return res.sendStatus(404);
+	return res.json(result[1][0]);
 
 
 });
@@ -467,50 +491,49 @@ const update = catchError(async (req, res) => {
 
 // Endpoint de Login
 const login = catchError(async (req, res) => {
-    const { email, password } = req.body;
+	const { email, password } = req.body;
 
-    // Comprobamos si existe el usuario
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-        // Si el usuario no existe, devolvemos un mensaje para que se registre
-        return res.status(401).json({ message: "El usuario no existe. Por favor, regístrate para acceder a tu cuenta." });
-    }
+	// Comprobamos si existe el usuario
+	const user = await User.findOne({ where: { email } });
+	if (!user) {
+		// Si el usuario no existe, devolvemos un mensaje para que se registre
+		return res.status(401).json({ message: "El usuario no existe. Por favor, regístrate para acceder a tu cuenta." });
+	}
 
-    // Comprobamos si el usuario está verificado
-    if (!user.isVerify) {
-        // Si el usuario no está verificado, devolvemos un mensaje para que verifique su correo electrónico
-        return res.status(401).json({ message: "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo." });
-    }
+	// Comprobamos si el usuario está verificado
+	if (!user.isVerify) {
+		// Si el usuario no está verificado, devolvemos un mensaje para que verifique su correo electrónico
+		return res.status(401).json({ message: "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo." });
+	}
 
-    // Comprobamos si la contraseña es válida
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).json({ message: "La contraseña o email ingresada es incorrecta." });
+	// Comprobamos si la contraseña es válida
+	const isValid = await bcrypt.compare(password, user.password);
+	if (!isValid) return res.status(401).json({ message: "La contraseña o email ingresada es incorrecta." });
 
-    // Anexamos hash para validar al usuario o caducar la sesión
-    const token = jwt.sign(
-        { user },
-        process.env.TOKEN_SECRET,
-        { expiresIn: "1d" }
-    );
+	// Anexamos hash para validar al usuario o caducar la sesión
+	const token = jwt.sign(
+		{ user },
+		process.env.TOKEN_SECRET,
+		{ expiresIn: '1d' }
+	);
 
-    return res.json({ user, token });
+	return res.json({ user, token });
 });
 
 //Endpoint Resend msj verification
 const resendVerification = catchError(async (req, res) => {
-    const { email } = req.body;
-    console.log(email);
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
-    const verificationToken = generateVerificationToken();
-    await User.update({ verificationToken }, { where: { email } });
-    const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
+	const { email } = req.body;	
+	const user = await User.findOne({ where: { email } });
+	if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+	const verificationToken = generateVerificationToken();
+	await User.update({ verificationToken }, { where: { email } });
+	const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
 
-    // Configuramos las opciones del correo
-    const mailOptions = {
-        to: email,
-        subject: 'Activación de cuenta - Everchic',
-        html: `
+	// Configuramos las opciones del correo
+	const mailOptions = {
+		to: email,
+		subject: 'Activación de cuenta - Everchic',
+		html: `
         <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
 
@@ -862,39 +885,37 @@ const resendVerification = catchError(async (req, res) => {
 
 </html>
         `
-    }
+	}
 
-    try {
-        await sendEmail(mailOptions, verificationLink);
-        return res.json({ message: "Se ha enviado un correo de verificación" });
-    } catch (error) {
-        console.error('Error al enviar el correo electrónico:', error);
-        return res.status(500).json({ message: "Error al enviar el correo de verificación" });
-    }
+	try {
+		await sendEmail(mailOptions, verificationLink);
+		return res.json({ message: "Se ha enviado un correo de verificación" });
+	} catch (error) {
+		console.error('Error al enviar el correo electrónico:', error);
+		return res.status(500).json({ message: "Error al enviar el correo de verificación" });
+	}
 
 });
 
-
-
 // Endpoint Recover password
 const recoverPassword = catchError(async (req, res) => {
-    const { email } = req.body;
+	const { email } = req.body;
 
-    // Comprobamos si el usuario existe
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+	// Comprobamos si el usuario existe
+	const user = await User.findOne({ where: { email } });
+	if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    // Generamos un token que caduca en 1 día
-    const token = jwt.sign({ id: user.id }, process.env.TOKEN_SECRET, { expiresIn: "1d" });
+	// Generamos un token que caduca en 1 día
+	const token = jwt.sign({ id: user.id }, process.env.TOKEN_SECRET, { expiresIn: "1d" });
 
-    // Creamos el enlace de verificación
-    const verificationLink = `${process.env.FRONTEND_URL}/recover_account/${token}`;
+	// Creamos el enlace de verificación
+	const verificationLink = `${process.env.FRONTEND_URL}/recover_account/${token}`;
 
-    // Configuramos las opciones del correo
-    const mailOptions = {
-        to: email,
-        subject: 'Restablecimiento de contraseña - Everchic',        
-        html: `
+	// Configuramos las opciones del correo
+	const mailOptions = {
+		to: email,
+		subject: 'Restablecimiento de contraseña - Everchic',
+		html: `
         <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
 
@@ -1147,100 +1168,91 @@ const recoverPassword = catchError(async (req, res) => {
 
 </html>
         `
-    };
+	};
 
-    // Enviamos el correo electrónico
-    try {
-        await sendEmail(mailOptions);
-        return res.json({ message: "Se ha enviado un correo de recuperación" });
-    } catch (error) {
-        console.error('Error al enviar el correo electrónico:', error);
-        return res.status(500).json({ message: "Error al enviar el correo de recuperación" });
-    }
+	// Enviamos el correo electrónico
+	try {
+		await sendEmail(mailOptions);
+		return res.json({ message: "Se ha enviado un correo de recuperación" });
+	} catch (error) {
+		console.error('Error al enviar el correo electrónico:', error);
+		return res.status(500).json({ message: "Error al enviar el correo de recuperación" });
+	}
 });
 
 
 
 //Endpoint Update password
 const updatePassword = catchError(async (req, res) => {
-    const { token, password } = req.body;
-    // Verificar y decodificar el token
-    let decoded;
-    try {
-        decoded = jwt.verify(token, process.env.TOKEN_SECRET);
-    } catch (err) {
-        return res.status(400).json({ message: "Token inválido o expirado" });
-    }
+	const { token, password } = req.body;
+	// Verificar y decodificar el token
+	let decoded;
+	try {
+		decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+	} catch (err) {
+		return res.status(400).json({ message: "Token inválido o expirado" });
+	}
 
-    // Buscar al usuario en la base de datos
-    const user = await User.findOne({ where: { id: decoded.id } });
-    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+	// Buscar al usuario en la base de datos
+	const user = await User.findOne({ where: { id: decoded.id } });
+	if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    // Hash de la nueva contraseña
-    const hash = await bcrypt.hash(password, 10);
+	// Hash de la nueva contraseña
+	const hash = await bcrypt.hash(password, 10);
 
-    // Actualizar la contraseña en la base de datos
-    await User.update({ password: hash }, { where: { id: decoded.id } });
+	// Actualizar la contraseña en la base de datos
+	await User.update({ password: hash }, { where: { id: decoded.id } });
 
-    return res.json({ message: "Contraseña actualizada" });
+	return res.json({ message: "Contraseña actualizada" });
 });
 
 //Endpoint getAll likes
 const getLikes = catchError(async (req, res) => {
-    try {
-        const { id } = req.params;
-        const likes = await ProductLike.findAll({ where: { userId: id } });
-        return res.json(likes);
-    } catch (error) {
-        console.error("Error al obtener likes:", error);
-        return res.status(500).json({ error: "Error al obtener likes o no tenga likes" });
-    }
+	try {
+		const { id } = req.params;
+		const likes = await ProductLike.findAll({ where: { userId: id } });
+		return res.json(likes);
+	} catch (error) {
+		console.error("Error al obtener likes:", error);
+		return res.status(500).json({ error: "Error al obtener likes o no tenga likes" });
+	}
 });
 
 
 
-//Endpoint like user create
-const createLike = catchError(async (req, res) => {
-    try {
-        const { userId, productId } = req.body;
-        const like = await ProductLike.create({ userId: userId, productId: productId });
-        return res.json(like);
-    } catch (error) {
-        console.error("Error al crear like:", error);
-        return res.status(500).json({ error: "Error al crear like" });
-    }
-
-});
 
 
-
-//Endpoint quitar like 
-const deleteLike = catchError(async (req, res) => {
-
-    try {
-        const { userId, productId } = req.body;
-        const like = await ProductLike.destroy({ where: { userId: userId, productId: productId } });
-        return res.json(like);
-    } catch (error) {
-        console.error("Error al quitar like:", error);
-        return res.status(500).json({ error: "Error al quitar like" });
-    }
-
+//Endpoint handle Like 
+const upgradeLike = catchError(async (req, res) => {
+	try {
+		const { userId, productId } = req.body;
+		//buscar el like si existe 
+		const like = await ProductLike.findOne({ where: { userId: userId, productId: productId } })
+		if (like) {
+			await like.destroy();
+			return res.json({ message: "Like eliminado" });
+		} else {
+			await ProductLike.create({ userId: userId, productId: productId });
+			return res.json({ message: "Like agregado" });
+		}
+	} catch (error) {
+		console.error("Error al actualizar like:", error);
+	}
 });
 
 module.exports = {
-    getOne,
-    getAll,
-    create,
-    remove,
-    update,
-    login,
-    verifyEmail,
-    recoverPassword,
-    updatePassword,
-    getLikes,
-    createLike,
-    deleteLike,
-    resendVerification
+	getOne,
+	getAll,
+	createUser,
+	remove,
+	update,
+	login,
+	verifyEmail,
+	recoverPassword,
+	updatePassword,
+	getLikes,
+	upgradeLike,
+	resendVerification,
+	validateSession
 
 }
