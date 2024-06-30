@@ -36,8 +36,8 @@ const Product = sequelize.define('product', {
         allowNull: false
     },
     deleted_at: {
-        type: DataTypes.DATE,
-        defaultValue: null // Valor por defecto es null, indicando que no ha sido eliminado
+        type: DataTypes.BOOLEAN,
+        allowNull: false 
     }
     //SizeId
     //categoryId

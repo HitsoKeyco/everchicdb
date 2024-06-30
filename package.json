@@ -17,8 +17,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/recaptcha-enterprise": "^5.5.0",
-    "@google-cloud/secret-manager": "^5.2.0",
     "axios": "1.6.8",
     "bcrypt": "5.1.0",
     "chalk": "^5.3.0",
@@ -41,13 +39,14 @@
     "ora": "^8.0.1",
     "pg": "8.11.1",
     "pg-hstore": "2.3.4",
-    "puppeteer": "^22.10.0",
+    "puppeteer": "^22.12.1",
+    "puppeteer-core": "^22.12.1",
     "qrcode": "^1.5.3",
     "qrcode-terminal": "^0.12.0",
     "sequelize": "6.32.1",
     "socket.io": "^4.7.5",
     "uuid": "^9.0.1",
-    "whatsapp-web.js": "^1.23.0"
+    "whatsapp-web.js": "^1.24.0"
   },
   "devDependencies": {
     "jest": "29.7.0",

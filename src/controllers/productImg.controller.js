@@ -24,8 +24,8 @@ const create = catchError(async (req, res) => {
     try {
         // Aquí podrías guardar las URLs de las imágenes en la base de datos
         const productImg = await ProductImg.create({
-            url_small: `${req.protocol}://${req.headers.host}/uploads/images_products/small/${smallImage.filename}`,
-            url_medium: `${req.protocol}://${req.headers.host}/uploads/images_products/medium/${mediumImage.filename}`,
+            url_small: `${req.protocol}://${req.headers.host}/api/v1/uploads/images_products/small/${smallImage.filename}`,
+            url_medium: `${req.protocol}://${req.headers.host}/api/v1/uploads/images_products/medium/${mediumImage.filename}`,
             productId,
             // Otros campos que necesites guardar
         });

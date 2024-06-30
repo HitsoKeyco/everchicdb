@@ -9,6 +9,7 @@ const Size = require('../models/Size');
 const ProductSize = require('../models/ProductSize');
 const ProductTag = require('../models/ProductTag');
 const Collection = require('../models/Collection');
+const { where } = require('sequelize');
 
 const getbyCategory = catchError(async (req, res) => {
     const results = await Category.findAll({
@@ -45,6 +46,27 @@ const getAll = catchError(async (req, res) => {
     });
 });
 
+const getAllAdmin = catchError(async (req, res) => {
+    const { page = 1, limit = 1 } = req.query;       
+
+    const offset = (page - 1) * limit;  //calculo del indice a recuperar por pagina
+    const results = await Product.findAndCountAll({
+        include: [Category, ProductImg, Tag, Size, Collection],        
+        offset, //indice desde donde se contaran los elementos
+        limit  // cantidad de elementos qye se traeran desde el indice offset
+    });
+
+    //count cantidad en valor numerico de elementos, rows elementos del arreglo
+    const { count, rows } = results;
+
+    return res.json({
+        total: count,
+        currentPage: page,
+        totalPages: Math.ceil(count / limit),
+        products: rows
+    });
+});
+
 
 const create = catchError(async (req, res) => {
     const result = await Product.create(req.body);
@@ -53,7 +75,7 @@ const create = catchError(async (req, res) => {
 
 const getOne = catchError(async (req, res) => {
     const { id } = req.params;
-    const result = await Product.findByPk(id, { include: [Category, ProductImg, Tag, Supplier, Size, Collection] });
+    const result = await Product.findByPk(id, { include: [Category, ProductImg, Supplier, Size, Collection, Tag] });    
     if (!result) return res.sendStatus(404);
     return res.json(result);
 });
@@ -200,6 +222,7 @@ module.exports = {
     getOneProductOrder,
     getbyCategory,
     getAll,
+    getAllAdmin,
     create,
     getOne,
     remove,
