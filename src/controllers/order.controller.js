@@ -8,6 +8,8 @@ const { verify } = require('hcaptcha');
 const OrderStatus = require('../models/OrderStatus');
 const sequelize = require('../utils/connection');
 const { createUser } = require('../utils/createUser');
+const { sendMessageWhatsapp } = require('../sendOrderWhatsapp');
+
 
 const getAll = catchError(async (req, res) => {
     const results = await Order.findAll();
@@ -48,18 +50,18 @@ const verifyCaptcha = async (req, res) => {
 // Tu función de creación
 
 const create = catchError(async (req, res) => {
-    const { newUser, newDataShipping, cart, cartFree, total } = req.body;
-    const dataUser = { ...newUser, ...newDataShipping };
+    const { userActive, cart, cartFree, total } = req.body;
+    
     let user;
-
+    
     try {
         await sequelize.transaction(async (transaction) => {
-            user = await User.findOne({ where: { email: dataUser.email }, transaction });
+            user = await User.findOne({ where: { email: userActive.email }, transaction });
 
             if (user) {
-                await User.update(dataUser, { where: { id: user.id }, transaction });
+                await User.update(userActive, { where: { id: user.id }, transaction });
             } else {
-                user = await createUser(dataUser)
+                user = await createUser(userActive)
             }
 
             const orderStatus = await OrderStatus.findOne({ where: { order_status: 'pendiente' }, transaction });
@@ -106,12 +108,14 @@ const create = catchError(async (req, res) => {
         // Enviar mensaje al usuario (no dentro de la transacción)
         try {
             if (user.phone_first || user.phone_second) {
+                
                 const number = user.phone_first || user.phone_second;
                 const cleanedNumber = number.replace(/[^0-9]/g, ''); // Elimina cualquier caracter no numérico
                 const lastNineDigits = cleanedNumber.slice(-9); // Obtiene los últimos 9 dígitos
 
-                const phone = `593${lastNineDigits}@c.us`;
-                const message = `Hola ${user.firstName}, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!
+                const phone = `593${lastNineDigits}`;                
+                const message = `Hola Sergio, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!
+                
 
 🏦 *BANCO GUAYAQUIL*
 *CTA ahorro: 27776464*            
@@ -137,7 +141,8 @@ const create = catchError(async (req, res) => {
 *Cédula:* 0953412020
 *Correo:* everchic.sa@gmail.com
 `;
-                await sendMessage(phone, message);                
+                // await sendMessage(phone, message);                
+                await sendMessageWhatsapp(phone, message)
             }
         } catch (error) {
             console.error('No se ha podido enviar el mensaje:', error);

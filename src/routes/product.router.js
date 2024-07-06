@@ -6,7 +6,7 @@ const routerProduct = express.Router();
 
 routerProduct.route('/')
     .get(getAll)
-    .post(create) //🔒
+    .post(verifyJWT, create) //🔒
 
 routerProduct.route('/admin')
     .get(verifyJWT, getAllAdmin)

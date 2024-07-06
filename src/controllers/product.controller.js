@@ -4,12 +4,11 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const ProductImg = require('../models/ProductImg');
 const Tag = require('../models/Tag');
-const Supplier = require('../models/Supplier');
 const Size = require('../models/Size');
 const ProductSize = require('../models/ProductSize');
 const ProductTag = require('../models/ProductTag');
 const Collection = require('../models/Collection');
-const { where } = require('sequelize');
+
 
 const getbyCategory = catchError(async (req, res) => {
     const results = await Category.findAll({
@@ -25,48 +24,69 @@ const getbyCategory = catchError(async (req, res) => {
 
 const getAll = catchError(async (req, res) => {
     const { page = 1, limit = 1 } = req.query;
-    const where = { deleted_at: null }; // Excluye los productos eliminados
+    const where = { deleted_at: true }; // Excluye los productos eliminados
 
-    const offset = (page - 1) * limit;  //calculo del indice a recuperar por pagina
-    const results = await Product.findAndCountAll({
-        include: [Category, ProductImg, Tag, Size, Collection],
-        where,
-        offset, //indice desde donde se contaran los elementos
-        limit  // cantidad de elementos qye se traeran desde el indice offset
-    });
+    const offset = (page - 1) * limit;  // Cálculo del índice a recuperar por página
+    
+    try {
+        // Consulta para obtener los productos con sus relaciones y aplicando el where
+        const results = await Product.findAll({
+            include: [Category, ProductImg, Tag, Size, Collection],
+            where,
+            offset, // Índice desde donde se contarán los elementos
+            limit   // Cantidad de elementos que se traerán desde el índice offset
+        });
 
-    //count cantidad en valor numerico de elementos, rows elementos del arreglo
-    const { count, rows } = results;
+        // Consulta para contar todos los productos sin límite ni offset
+        const count = await Product.count();
 
-    return res.json({
-        total: count,
-        currentPage: page,
-        totalPages: Math.ceil(count / limit),
-        products: rows
-    });
+        // Calcula el número total de páginas necesarias
+        const totalPages = Math.ceil(count / limit);
+
+        return res.json({
+            total: count,
+            currentPage: page,
+            totalPages,
+            products: results
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Error retrieving products' });
+    }
 });
+
 
 const getAllAdmin = catchError(async (req, res) => {
-    const { page = 1, limit = 1 } = req.query;       
+    const page = parseInt(req.query.page || 1);
+    const limit = parseInt(req.query.limit || 10);  // Por defecto, limit es 10
 
-    const offset = (page - 1) * limit;  //calculo del indice a recuperar por pagina
-    const results = await Product.findAndCountAll({
-        include: [Category, ProductImg, Tag, Size, Collection],        
-        offset, //indice desde donde se contaran los elementos
-        limit  // cantidad de elementos qye se traeran desde el indice offset
-    });
+    const offset = (page - 1) * limit;
 
-    //count cantidad en valor numerico de elementos, rows elementos del arreglo
-    const { count, rows } = results;
+    try {
+        // Consulta para obtener los productos paginados con sus relaciones
+        const results = await Product.findAll({
+            include: [Category, ProductImg, Tag, Size, Collection],
+            offset,
+            limit
+        });
 
-    return res.json({
-        total: count,
-        currentPage: page,
-        totalPages: Math.ceil(count / limit),
-        products: rows
-    });
+        // Consulta para contar todos los productos sin límite ni offset
+        const count = await Product.count();
+
+        // Calcula el número total de páginas necesarias
+        const totalPages = Math.ceil(count / limit);
+
+        return res.json({
+            total: count,
+            currentPage: page,
+            totalPages,
+            products: results
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Error retrieving products' });
+    }
 });
-
 
 const create = catchError(async (req, res) => {
     const result = await Product.create(req.body);
@@ -75,7 +95,7 @@ const create = catchError(async (req, res) => {
 
 const getOne = catchError(async (req, res) => {
     const { id } = req.params;
-    const result = await Product.findByPk(id, { include: [Category, ProductImg, Supplier, Size, Collection, Tag] });    
+    const result = await Product.findByPk(id, { include: [Category, ProductImg, Size, Collection, Tag] });    
     if (!result) return res.sendStatus(404);
     return res.json(result);
 });
@@ -84,9 +104,10 @@ const getNewProduct = catchError(async (req, res) => {
     //encontrar productos donde tenga la columna new_products igual a true    
     const result = await Product.findAll({
         where: {
-            new_product: true
+            new_product: true,
+            deleted_at: false,
         },
-        include: [Category, ProductImg, Tag, Supplier, Size, Collection]
+        include: [Category, ProductImg, Tag, Size, Collection]
     });
     return res.json(result);
 })

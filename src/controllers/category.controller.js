@@ -24,7 +24,7 @@ const getByCategory = catchError(async (req, res) => {
         return res.status(400).json({ error: 'categoryId is required' });
     }
 
-    const where = { categoryId: categoryId, deleted_at: null }; // Excluye los productos eliminados
+    const where = { categoryId: categoryId, deleted_at: false }; // Excluye los productos eliminados
     const offset = (page - 1) * limit; // Calculo del indice a
 
     try {
@@ -35,22 +35,17 @@ const getByCategory = catchError(async (req, res) => {
             limit // Cantidad de elementos que se traeran desde el indice offset
         });
 
-        // Contar cantidad en valor numerico de elementos, rows elementos del arreglo
-        const { count, rows } = results;
+        // Contar cantidad de productos
+        const count = await Product.count({ where });
 
         // Calcular el número total de páginas
         const totalPages = Math.ceil(count / parseInt(limit));
-        console.log(count, rows, limit);
-        // Si la página solicitada excede el total de páginas, retornar un error
-        if (page > totalPages && totalPages > 0) {
-            return res.status(404).json({ error: 'Page not found' });
-        }
 
         return res.json({
             total: count,
-            currentPage: parseInt(page),
-            totalPages:  Math.ceil(totalPages / parseInt(limit)),
-            products: rows
+            currentPage: page,
+            totalPages,
+            products: results.rows
         });
     } catch (error) {
         console.error('Error al obtener productos por categoría:', error);

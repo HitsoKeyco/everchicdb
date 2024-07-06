@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const fs = require('fs');
 const path = require('path');
-const { initializeWhatsAppClient, validateClientStatus, destroySession, statusConecction } = require('../serverWhatsapp');
+// const { initializeWhatsAppClient, validateClientStatus, destroySession, statusConecction } = require('../serverWhatsapp');
 
 
 
@@ -68,7 +68,7 @@ const login = catchError(async (req, res) => {
 
 const getQrCode = catchError(async (req, res) => {    
     try {
-        await initializeWhatsAppClient();
+        // await initializeWhatsAppClient();
     } catch (error) {
         console.log(error);
         res.status(500).send("Error al inicializar el cliente de Whatsapp");

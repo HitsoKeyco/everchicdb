@@ -23,6 +23,7 @@ const routerChatMessage = require('./chatMessage.route');
 const routerOrder = require('./order.router');
 const routerOrderStatus = require('./orderStatus.router');
 const routerOrderItem = require('./OrderItem.router');
+const routerWhatsapp = require('./whatsapp.router');
 const router = express.Router();
 
 
@@ -34,6 +35,7 @@ router.use("/product_images", routerProductImg)
 router.use("/collections", routerCollection)
 router.use("/message", routerChatMessage)
 router.use("/orders", routerOrder)
+router.use("/whatsapp", routerWhatsapp)
 router.use("/orders_status", routerOrderStatus)
 router.use("/orders_items", routerOrderItem)
 router.use("/cart", verifyJWT,routerCart) //🔒

@@ -1,10 +1,12 @@
-const { getAllOrdersUser, getAll, create, getOne, remove, update, verifyCaptcha } = require('../controllers/order.controller');
+const { getAllOrdersUser, getAll, create, remove, update, verifyCaptcha } = require('../controllers/order.controller');
 const express = require('express');
 
 const routerOrder = express.Router();
 
 routerOrder.route('/')
-    .get(getAll)    
+    .get(getAll)
+
+routerOrder.route('/create_order')    
     .post(create)
 
 routerOrder.route('/verify_captcha')

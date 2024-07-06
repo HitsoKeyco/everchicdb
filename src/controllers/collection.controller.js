@@ -24,7 +24,7 @@ const getOne = catchError(async(req, res) => {
 });
 
 const getGroupCollection = catchError(async (req, res) => {
-    const { page = 1, limit = 1 } = req.query;
+    const { page , limit } = req.query;
 
     try {
         // Obtener todas las colecciones
@@ -39,7 +39,7 @@ const getGroupCollection = catchError(async (req, res) => {
             const products = await Product.findAll({
                 where: {
                     collectionId: collection.id,
-                    deleted_at: null // Filtrar productos no eliminados
+                    deleted_at: false // Filtrar productos no eliminados
                 },
                 include: [Category, ProductImg, Tag, Size], // Incluir relaciones de productos si es necesario
             });
@@ -58,12 +58,12 @@ const getGroupCollection = catchError(async (req, res) => {
         const totalCollections = collectionGroups.length;
 
         // Obtener la colección específica para la página solicitada
-        const paginatedCollections = collectionGroups.slice((page - 1) * limit, page * limit);
+        const paginatedCollections = collectionGroups.slice((page - 1) * (limit - 5), page * (limit -5));
 
         return res.json({
             total: totalCollections, // Total de colecciones válidas (con productos)
             currentPage: parseInt(page),
-            totalPages: Math.ceil(totalCollections / parseInt(limit)),
+            totalPages: Math.ceil(totalCollections / parseInt(limit - 5)),
             products: paginatedCollections // Colecciones para la página actual con sus productos
         });
     } catch (error) {
@@ -71,6 +71,7 @@ const getGroupCollection = catchError(async (req, res) => {
         return res.status(500).json({ error: 'Error al obtener grupos de colecciones' });
     }
 });
+
 
 const remove = catchError(async(req, res) => {
     const { id } = req.params;
