@@ -9,7 +9,7 @@ routerProduct.route('/')
     .post(verifyJWT, create) //🔒
 
 routerProduct.route('/admin')
-    .get(verifyJWT, getAllAdmin)
+    .get(getAllAdmin)
 
 routerProduct.route('/new_product')
     .get(verifyJWT, getNewProduct)

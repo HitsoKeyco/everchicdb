@@ -23,11 +23,12 @@ const getbyCategory = catchError(async (req, res) => {
 
 
 const getAll = catchError(async (req, res) => {
-    const { page = 1, limit = 1 } = req.query;
-    const where = { deleted_at: true }; // Excluye los productos eliminados
+    const page = parseInt(req.query.page || 1);
+    const limit = parseInt(req.query.limit || 10); 
 
+    const where = { deleted_at: false }; // Excluye los productos eliminados
     const offset = (page - 1) * limit;  // Cálculo del índice a recuperar por página
-    
+        
     try {
         // Consulta para obtener los productos con sus relaciones y aplicando el where
         const results = await Product.findAll({
@@ -37,9 +38,11 @@ const getAll = catchError(async (req, res) => {
             limit   // Cantidad de elementos que se traerán desde el índice offset
         });
 
+        console.log(results.length);
+
         // Consulta para contar todos los productos sin límite ni offset
         const count = await Product.count();
-
+        console.log(count);
         // Calcula el número total de páginas necesarias
         const totalPages = Math.ceil(count / limit);
 
@@ -58,8 +61,7 @@ const getAll = catchError(async (req, res) => {
 
 const getAllAdmin = catchError(async (req, res) => {
     const page = parseInt(req.query.page || 1);
-    const limit = parseInt(req.query.limit || 10);  // Por defecto, limit es 10
-
+    const limit = parseInt(req.query.limit || 10); 
     const offset = (page - 1) * limit;
 
     try {
