@@ -1,4 +1,4 @@
-const { getAll, getAllAdmin, create, getOne, remove, softDelete, update, setImage, setSizes, setTags, getOneProductOrder, getNewProduct } = require('../controllers/product.controller');
+const { getAll, getAllAdmin, create, getOne, remove, softDelete, update, setImage, setSizes, setTags, getOneProductOrder, getNewProduct, searchProductByNameOrSKU } = require('../controllers/product.controller');
 const express = require('express');
 const { verifyJWT } = require('../utils/VerifyJWT');
 
@@ -7,6 +7,9 @@ const routerProduct = express.Router();
 routerProduct.route('/')
     .get(getAll)
     .post(verifyJWT, create) //🔒
+
+routerProduct.route('/searchByNameOrSKU')
+    .get(searchProductByNameOrSKU)
 
 routerProduct.route('/admin')
     .get(getAllAdmin)

@@ -8,7 +8,7 @@ const Size = require('../models/Size');
 const ProductSize = require('../models/ProductSize');
 const ProductTag = require('../models/ProductTag');
 const Collection = require('../models/Collection');
-
+const { Op } = require('sequelize');
 
 const getbyCategory = catchError(async (req, res) => {
     const results = await Category.findAll({
@@ -24,11 +24,11 @@ const getbyCategory = catchError(async (req, res) => {
 
 const getAll = catchError(async (req, res) => {
     const page = parseInt(req.query.page || 1);
-    const limit = parseInt(req.query.limit || 10); 
+    const limit = parseInt(req.query.limit || 10);
 
     const where = { deleted_at: false }; // Excluye los productos eliminados
     const offset = (page - 1) * limit;  // Cálculo del índice a recuperar por página
-        
+
     try {
         // Consulta para obtener los productos con sus relaciones y aplicando el where
         const results = await Product.findAll({
@@ -61,7 +61,7 @@ const getAll = catchError(async (req, res) => {
 
 const getAllAdmin = catchError(async (req, res) => {
     const page = parseInt(req.query.page || 1);
-    const limit = parseInt(req.query.limit || 10); 
+    const limit = parseInt(req.query.limit || 10);
     const offset = (page - 1) * limit;
 
     try {
@@ -97,7 +97,7 @@ const create = catchError(async (req, res) => {
 
 const getOne = catchError(async (req, res) => {
     const { id } = req.params;
-    const result = await Product.findByPk(id, { include: [Category, ProductImg, Size, Collection, Tag] });    
+    const result = await Product.findByPk(id, { include: [Category, ProductImg, Size, Collection, Tag] });
     if (!result) return res.sendStatus(404);
     return res.json(result);
 });
@@ -241,6 +241,56 @@ const softDelete = catchError(async (req, res) => {
     return res.json({ message: 'Product deleted successfully' });
 });
 
+// buscador de producto por nombre o SKU
+const searchProductByNameOrSKU = catchError(async (req, res) => {
+    const { title, page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+    let whereCondition = {};
+
+    if (title) {
+        const lowerCaseTitle = title.toLowerCase(); // Convertir el título a minúsculas
+        whereCondition = {
+            [Op.or]: [
+                {
+                    title: {
+                        [Op.iLike]: `%${lowerCaseTitle}%` // Usar Op.iLike para no ser sensible a mayúsculas/minúsculas
+                    }
+                },
+                {
+                    sku: {
+                        [Op.iLike]: `%${lowerCaseTitle}%`
+                    }
+                }
+            ]
+        };
+    }
+
+    try {
+        const products = await Product.findAndCountAll({
+            where: whereCondition,
+            include: [Category, ProductImg, Tag, Size, Collection],
+            offset,
+            limit
+        });
+
+        const count = products.count;
+        const totalPages = Math.ceil(count / limit);
+
+        res.json({
+            total: count,
+            currentPage: page,
+            totalPages,
+            products: products.rows
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error retrieving products' });
+    }
+});
+
+
+
+
 module.exports = {
     getOneProductOrder,
     getbyCategory,
@@ -254,5 +304,6 @@ module.exports = {
     setImage,
     setSizes,
     setTags,
-    getNewProduct
+    getNewProduct,
+    searchProductByNameOrSKU,
 }
