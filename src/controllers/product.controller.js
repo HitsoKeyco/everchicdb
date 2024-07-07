@@ -241,7 +241,7 @@ const softDelete = catchError(async (req, res) => {
     return res.json({ message: 'Product deleted successfully' });
 });
 
-// buscador de producto por nombre o SKU
+//Busqueda de productos por Title o SKU
 const searchProductByNameOrSKU = catchError(async (req, res) => {
     const { title, page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -253,7 +253,7 @@ const searchProductByNameOrSKU = catchError(async (req, res) => {
             [Op.or]: [
                 {
                     title: {
-                        [Op.iLike]: `%${lowerCaseTitle}%` // Usar Op.iLike para no ser sensible a mayúsculas/minúsculas
+                        [Op.iLike]: `%${lowerCaseTitle}%` // Usar Op.iLike para no ser sensible a mayúsculas>
                     }
                 },
                 {
@@ -266,21 +266,27 @@ const searchProductByNameOrSKU = catchError(async (req, res) => {
     }
 
     try {
-        const products = await Product.findAndCountAll({
+        // Contar todos los productos que coinciden con la condición
+        const countResult = await Product.count({
+            where: whereCondition
+        });
+
+        // Obtener los productos para la página actual
+        const products = await Product.findAll({
             where: whereCondition,
             include: [Category, ProductImg, Tag, Size, Collection],
             offset,
             limit
         });
 
-        const count = products.count;
-        const totalPages = Math.ceil(count / limit);
+        // Calcular el número total de páginas
+        const totalPages = Math.ceil(countResult / limit);
 
         res.json({
-            total: count,
+            total: countResult,
             currentPage: page,
             totalPages,
-            products: products.rows
+            products
         });
     } catch (error) {
         console.error(error);
