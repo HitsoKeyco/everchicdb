@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt')
 
 
 const createUser = async( data ) => {
-	console.log('entre', data);
+	
 	const { dni, phone_first, phone_second, city, address, firstName, lastName, email, password } = data;
 
 	const hashPassword = await bcrypt.hash(password, 10);

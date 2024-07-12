@@ -6,11 +6,11 @@ const OrderItem = require('../models/OrderItem');
 const { verify } = require('hcaptcha');
 const OrderStatus = require('../models/OrderStatus');
 const sequelize = require('../utils/connection');
-const { createUser } = require('../utils/createUser');
+
 const { sendMessageWhatsapp } = require('../sendOrderWhatsapp');
 const Product = require('../models/Product');
-const { Op } = require('sequelize');
 const { validationCart } = require('../utils/validationCart');
+const { createUser } = require('./user.controller');
 
 
 const getAll = catchError(async (req, res) => {
@@ -63,7 +63,9 @@ const create = catchError(async (req, res) => {
 
                 // Crear usuario si no existe
                 if (!userDB) {
+                    
                     user = await createUser(userData, transaction);
+
                 }
 
                 // Encontrar el estado de orden 'pendiente'
