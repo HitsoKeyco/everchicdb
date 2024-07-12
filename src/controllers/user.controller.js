@@ -37,10 +37,11 @@ const createUser = catchError(async (req, res) => {
 	const hashPassword = await bcrypt.hash(password, 10);
 	//Verificar si es que el usuario ya existe en la base de datos 
 	
-	if (!email) {
+	if (!email || !firstName || !password ||  !lastName) {
 		return res.status(400).json({ message: 'No existe el campo email.' });
 	}
-	
+
+		
 	const userExist = await User.findOne({ where: { email, isVerify: false } });
 	if (userExist) {
 		return res.status(400).json({ message: 'Este email ya esta registrado, pero aun no verificado.' });
