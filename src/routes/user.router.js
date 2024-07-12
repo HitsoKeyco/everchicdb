@@ -1,4 +1,4 @@
-const { getOne, getAll, createUser, remove, update, login, verifyEmail, recoverPassword, updatePassword, getLikes, upgradeLike, resendVerification, validateSession } = require('../controllers/user.controller');
+const { getOne, getAll, createUser, remove, update, login, verifyEmail, recoverPassword, updatePassword, getLikes, upgradeLike, resendVerification, validateSession, limiter } = require('../controllers/user.controller');
 const express = require('express');
 const { verifyJWT } = require('../utils/VerifyJWT');
 
@@ -9,7 +9,7 @@ routerUser.route('/')
     .post(createUser);
 
 routerUser.route('/login')
-    .post(login)
+    .post(limiter, login)
 
 //Ruta Recover account
 routerUser.route('/recover_account')
@@ -32,7 +32,6 @@ routerUser.route('/like_update_product')
 //Ruta 1 usuario 
 routerUser.route('/:id')
     .get(getOne)
-
 
 //Ruta usuarios like a productos
 routerUser.route('/like_product/:id')

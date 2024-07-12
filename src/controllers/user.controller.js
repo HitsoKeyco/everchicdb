@@ -7,6 +7,14 @@ const generateVerificationToken = require('../utils/verifyToken');
 const saveVerificationToken = require('../utils/saveVerificationToken');
 const { findUserByVerificationToken } = require('../utils/findUserByVerificationToken');
 const ProductLike = require('../models/ProductLike');
+const rateLimit = require('express-rate-limit');
+
+// Configurar el limitador de tasa
+const limiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 15 minutos
+    max: 5, // Limite a 5 solicitudes por IP cada 15 minutos
+    message: "Demasiados intentos de inicio de sesión desde esta IP, por favor intente de nuevo después de 15 minutos"
+});
 
 
 const getAll = catchError(async (req, res) => {
@@ -487,38 +495,41 @@ const update = catchError(async (req, res) => {
 
 });
 
-
-
-// Endpoint de Login
 const login = catchError(async (req, res) => {
-	const { email, password } = req.body;
+    const { email, password } = req.body;
 
-	// Comprobamos si existe el usuario
-	const user = await User.findOne({ where: { email } });
-	if (!user) {
-		// Si el usuario no existe, devolvemos un mensaje para que se registre
-		return res.status(401).json({ message: "El usuario no existe. Por favor, regístrate para acceder a tu cuenta." });
-	}
+    // Validar entradas
+    if (!email || !password) {
+        return res.status(400).json({ message: "Email y contraseña son requeridos." });
+    }
 
-	// Comprobamos si el usuario está verificado
-	if (!user.isVerify) {
-		// Si el usuario no está verificado, devolvemos un mensaje para que verifique su correo electrónico
-		return res.status(401).json({ message: "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo." });
-	}
+    // Comprobamos si existe el usuario
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+        return res.status(401).json({ message: "Credenciales inválidas." });
+    }
 
-	// Comprobamos si la contraseña es válida
-	const isValid = await bcrypt.compare(password, user.password);
-	if (!isValid) return res.status(401).json({ message: "La contraseña o email ingresada es incorrecta." });
+    // Comprobamos si el usuario está verificado
+    if (!user.isVerify) {
+        return res.status(401).json({ message: "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo." });
+    }
 
-	// Anexamos hash para validar al usuario o caducar la sesión
-	const token = jwt.sign(
-		{ user },
-		process.env.TOKEN_SECRET,
-		{ expiresIn: '1d' }
-	);
+    // Comprobamos si la contraseña es válida
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+        return res.status(401).json({ message: "Credenciales inválidas." });
+    }
 
-	return res.json({ user, token });
+    // Generar el token JWT
+    const token = jwt.sign(
+        { userId: user.id }, // Solo incluir la información mínima necesaria
+        process.env.TOKEN_SECRET,
+        { expiresIn: '1d' }
+    );
+
+    return res.json({ user, token });
 });
+
 
 //Endpoint Resend msj verification
 const resendVerification = catchError(async (req, res) => {
@@ -1253,6 +1264,7 @@ module.exports = {
 	getLikes,
 	upgradeLike,
 	resendVerification,
-	validateSession
+	validateSession,
+	limiter
 
 }

@@ -1,14 +1,16 @@
 const catchError = require('../utils/catchError');
 const Order = require('../models/Order');
 const User = require('../models/User');
-const Product = require('../models/Product');
+
 const OrderItem = require('../models/OrderItem');
-const { sendMessage } = require('../serverWhatsapp');
 const { verify } = require('hcaptcha');
 const OrderStatus = require('../models/OrderStatus');
 const sequelize = require('../utils/connection');
 const { createUser } = require('../utils/createUser');
 const { sendMessageWhatsapp } = require('../sendOrderWhatsapp');
+const Product = require('../models/Product');
+const { Op } = require('sequelize');
+const { validationCart } = require('../utils/validationCart');
 
 
 const getAll = catchError(async (req, res) => {
@@ -16,16 +18,12 @@ const getAll = catchError(async (req, res) => {
     return res.status(200).json(results);
 })
 
-
 const getAllOrdersUser = catchError(async (req, res) => {
     const { id } = req.params;
     const results = await Order.findAll({ where: { userId: id } });
     if (!results) res.status(404).json({ message: 'No orders found' });
     return res.status(200).json(results);
 });
-
-
-
 
 const verifyCaptcha = async (req, res) => {
     const { tokenCaptcha } = req.body;
@@ -47,114 +45,160 @@ const verifyCaptcha = async (req, res) => {
 };
 
 
-// Tu función de creación
-
 const create = catchError(async (req, res) => {
-    const { userActive, cart, cartFree, total } = req.body;
-    
-    let user;
-    
-    try {
-        await sequelize.transaction(async (transaction) => {
-            user = await User.findOne({ where: { email: userActive.email }, transaction });
+    const { cart, cartFree, userData, price_unit, total, isPriceShipping } = req.body;
+    const result = await validationCart(cart, cartFree, price_unit, total, isPriceShipping)
 
-            if (user) {
-                await User.update(userActive, { where: { id: user.id }, transaction });
-            } else {
-                user = await createUser(userActive)
-            }
+    if (result.cartJoinFiltered.length === 0 && result.failOperation === false) {
+        let user
+        try {
+            await sequelize.transaction(async (transaction) => {
+                // Verificar si el usuario ya existe
+                const userDB = await User.findOne({ where: { email: userData.email }, transaction });
 
-            const orderStatus = await OrderStatus.findOne({ where: { order_status: 'pendiente' }, transaction });
-            if (!orderStatus) {
-                throw new Error("El estado de orden 'pendiente' no existe");
-            }
+                if (userDB) {
+                    await transaction.rollback();
+                    return res.status(400).json({ message: 'El usuario ya existe. Por favor inicia sesión' });
+                }
 
-            const order = await Order.create({
-                userId: user.id,
-                adminId: null,
-                orderStatusId: orderStatus.id,
-                total: total,
-                paid: false
-            }, { transaction });
+                // Crear usuario si no existe
+                if (!userDB) {
+                    user = await createUser(userData, transaction);
+                }
 
-            const orderItemsPromises = cart.map(async productData => {
-                const product = await Product.findByPk(productData.productId, { transaction });
-                if (product) {
+                // Encontrar el estado de orden 'pendiente'
+                const orderStatus = await OrderStatus.findOne({ where: { order_status: 'pendiente' }, transaction });
+                if (!orderStatus) {
+                    await transaction.rollback();
+                    return res.status(404).json({ message: "El estado de orden 'Pendiente' no existe" });
+                }
+
+                // Crear la orden principal
+                const order = await Order.create({
+                    userId: user.id,
+                    adminId: null,
+                    orderStatusId: orderStatus.id,
+                    total: total,
+                    paid: false,
+                    payment_option: null,
+                }, { transaction });
+
+                // Obtener todos los IDs de productos en el carrito y en cartFree
+                const productIds = [...cart, ...cartFree].map(productData => productData.productId);
+
+                // Consultar todos los productos a la vez
+                const products = await Product.findAll({ where: { id: productIds }, transaction });
+
+                // Separar productos de cart y cartFree
+                const cartProducts = cart.map(productData => ({
+                    productData,
+                    product: products.find(p => p.id === productData.productId),
+                }));
+
+                const cartFreeProducts = cartFree.map(productData => ({
+                    productData,
+                    product: products.find(p => p.id === productData.productId),
+                }));
+
+                // Procesar cart
+                const orderItemsPromises = cartProducts.map(async ({ productData, product }) => {
+                    if (!product) {
+                        await transaction.rollback();
+                        return res.status(404).json({ message: `Existe un producto no encontrado: ${product.title}` })
+                    }
+
+
+                    // Restar la cantidad del stock
+                    product.stock -= productData.quantity;
+                    await product.save({ transaction });
+
+                    // Crear el OrderItem
                     return OrderItem.create({
                         orderId: order.id,
                         productId: productData.productId,
                         quantity: productData.quantity,
                         price_unit: productData.priceUnit
                     }, { transaction });
-                }
-            });
+                });
 
-            const cartFreePromises = cartFree.map(async productData => {
-                const product = await Product.findByPk(productData.productId, { transaction });
-                if (product) {
+                // Procesar cartFree
+                const cartFreePromises = cartFreeProducts.map(async ({ productData, product }) => {
+                    if (!product) {
+                        await transaction.rollback();
+                        return res.status(404).json({ message: `Existe un producto no encontrado: ${product.title}` })
+                    }
+
+
+                    // Restar la cantidad del stock
+                    product.stock -= productData.quantity;
+                    await product.save({ transaction });
+
+                    // Crear el OrderItem free
                     return OrderItem.create({
                         orderId: order.id,
                         productId: productData.productId,
                         quantity: productData.quantity,
-                        price_unit: 0,
-                        free: true
+                        price_unit: 0, // Precio 0 para productos gratuitos
+                        free: true // Marcar como gratuito
                     }, { transaction });
-                }
+                });
+
+                // Ejecutar todas las promesas de OrderItem en paralelo
+                await Promise.all([...orderItemsPromises, ...cartFreePromises]);
+
             });
 
-            await Promise.all([...orderItemsPromises, ...cartFreePromises]);
-        });
+            // Enviar mensaje al usuario (no dentro de la transacción)
+            try {
+                if (user && (user.phone_first || user.phone_second)) {
+                    const number = user.phone_first || user.phone_second;
+                    const cleanedNumber = number.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
+                    const lastNineDigits = cleanedNumber.slice(-9); // Obtener los últimos 9 dígitos
 
-        // Enviar mensaje al usuario (no dentro de la transacción)
-        try {
-            if (user.phone_first || user.phone_second) {
-                
-                const number = user.phone_first || user.phone_second;
-                const cleanedNumber = number.replace(/[^0-9]/g, ''); // Elimina cualquier caracter no numérico
-                const lastNineDigits = cleanedNumber.slice(-9); // Obtiene los últimos 9 dígitos
-
-                const phone = `593${lastNineDigits}`;                
-                const message = `Hola Sergio, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!
-                
-
-🏦 *BANCO GUAYAQUIL*
-*CTA ahorro: 27776464*            
-👩🏻 GINA ALVARADO
-*Cédula:* 0953412020
-*Correo:* EverChic.sa@gmail.com
-
-🏦 *BANCO PICHINCHA*            
-*CTA ahorro: 2203067894*
-👩🏻 GINA ALVARADO
-*Cédula:* 0953412020
-*Correo:* everchic.sa@gmail.com
-
-🏦 *BANCO PACÍFICO*
-*CTA ahorro: 1053508041*
-👩🏻 GINA ALVARADO            
-*Cédula: 0953412020*
-*Correo:* everchic.sa@gmail.com
-
-🏦 *BANCO PRODUBANCO*
-*CTA ahorro: 20059528697*
-👩🏻 GINA ALVARADO            
-*Cédula:* 0953412020
-*Correo:* everchic.sa@gmail.com
-`;
-                // await sendMessage(phone, message);                
-                await sendMessageWhatsapp(phone, message)
+                    const phone = `593${lastNineDigits}`;
+                    const message = `Hola ${user.firstName}, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!
+                    
+                    *CTA ahorro: 27776464*            
+                    🏦 *BANCO GUAYAQUIL*
+                    *Cédula:* 0953412020
+                    👩🏻 GINA ALVARADO
+                    
+                    *Correo:* EverChic.sa@gmail.com
+                    *CTA ahorro: 2203067894*
+                    🏦 *BANCO PICHINCHA*            
+                    *Cédula:* 0953412020
+                    👩🏻 GINA ALVARADO
+                    
+                    *Correo:* everchic.sa@gmail.com
+                    *CTA ahorro: 1053508041*
+                    🏦 *BANCO PACÍFICO*
+                    *Cédula: 0953412020*
+                    👩🏻 GINA ALVARADO            
+                    
+                    *Correo:* everchic.sa@gmail.com
+                    *CTA ahorro: 20059528697*
+                    🏦 *BANCO PRODUBANCO*
+                    *Cédula:* 0953412020
+                    👩🏻 GINA ALVARADO            
+                    *Correo:* everchic.sa@gmail.com
+                `;
+                    await sendMessageWhatsapp(phone, message)
+                }
+            } catch (error) {
+                console.error('No se ha podido enviar el mensaje:', error);
             }
+
+            return res.status(200).json({ message: 'Orden creada exitosamente' });
+
         } catch (error) {
-            console.error('No se ha podido enviar el mensaje:', error);
+            console.error('Error al crear la orden:', error);
+            return res.status(500).json({ message: 'Error al procesar la solicitud' });
         }
 
-        return res.status(200).json({ message: 'Orden creada exitosamente' });
-    } catch (error) {
-        console.error('Error al crear la orden:', error);
-        return res.status(500).json({ message: 'Error al procesar la solicitud' });
+    } else {
+        res.status(400).json({ message: 'Ocurrio un error al procesar el pedido.', result });
     }
 });
-
 
 
 

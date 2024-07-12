@@ -2,8 +2,7 @@ const catchError = require('../utils/catchError');
 const { getQrWhatsapp } = require('../sendOrderWhatsapp');
 
 const getAll = catchError(async(req, res) => {
-    try {
-        // const qrCodeDataURL = await initializeWhatsAppClient();
+    try {        
         const data = await getQrWhatsapp();
         
          return res.status(200).send(data);

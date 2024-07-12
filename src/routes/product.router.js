@@ -1,4 +1,4 @@
-const { getAll, getAllAdmin, create, getOne, remove, softDelete, update, setImage, setSizes, setTags, getOneProductOrder, getNewProduct, searchProductByNameOrSKU } = require('../controllers/product.controller');
+const { getAll, getAllAdmin, create, getOne, remove, softDelete, updateProduct, setImage, setSizes, setTags, getOneProductOrder, getNewProduct, searchProductByNameOrSKU } = require('../controllers/product.controller');
 const express = require('express');
 const { verifyJWT } = require('../utils/VerifyJWT');
 
@@ -23,7 +23,8 @@ routerProduct.route('/search/:id')
 routerProduct.route('/:id')
     .get(getOneProductOrder)
     .delete(verifyJWT, remove) //🔒
-    .put(verifyJWT, update) //🔒
+    .put(verifyJWT, updateProduct) //🔒
+
 
 //Eliminado suave ruta
 routerProduct.route('/:id/soft_delete')

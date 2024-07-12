@@ -38,11 +38,9 @@ const getAll = catchError(async (req, res) => {
             limit   // Cantidad de elementos que se traerán desde el índice offset
         });
 
-        console.log(results.length);
-
         // Consulta para contar todos los productos sin límite ni offset
         const count = await Product.count();
-        console.log(count);
+
         // Calcula el número total de páginas necesarias
         const totalPages = Math.ceil(count / limit);
 
@@ -146,7 +144,7 @@ const remove = catchError(async (req, res) => {
 });
 
 
-const update = catchError(async (req, res) => {
+const updateProduct = catchError(async (req, res) => {
     const { id } = req.params;
     const result = await Product.update(
         req.body,
@@ -156,6 +154,15 @@ const update = catchError(async (req, res) => {
     return res.json(result[1][0]);
 });
 
+const updateProductOrder = catchError(async (req, res) => {
+    const { id } = req.params;
+    const result = await Product.update(
+        req.body,
+        { where: { id }, returning: true }
+    );
+    if (result[0] === 0) return res.sendStatus(404);
+    return res.json(result[1][0]);
+});
 
 
 const setImage = catchError(async (req, res) => {
@@ -306,7 +313,8 @@ module.exports = {
     getOne,
     remove,
     softDelete,
-    update,
+    updateProduct,
+    updateProductOrder,
     setImage,
     setSizes,
     setTags,
