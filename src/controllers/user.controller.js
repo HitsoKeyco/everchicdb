@@ -11,9 +11,9 @@ const rateLimit = require('express-rate-limit');
 
 // Configurar el limitador de tasa
 const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 15 minutos
-    max: 5, // Limite a 5 solicitudes por IP cada 15 minutos
-    message: "Demasiados intentos de inicio de sesión desde esta IP, por favor intente de nuevo después de 15 minutos"
+	windowMs: 1 * 60 * 1000, // 15 minutos
+	max: 5, // Limite a 5 solicitudes por IP cada 15 minutos
+	message: "Demasiados intentos de inicio de sesión desde esta IP, por favor intente de nuevo después de 15 minutos"
 });
 
 
@@ -31,17 +31,17 @@ const getOne = catchError(async (req, res) => {
 
 
 const createUser = catchError(async (req, res) => {
-	
+
 	const { dni, phone_first, phone_second, city, address, firstName, lastName, email, password } = req.body || req;
 
 	const hashPassword = await bcrypt.hash(password, 10);
 	//Verificar si es que el usuario ya existe en la base de datos 
-	
-	if (!email || !firstName || !password ||  !lastName) {
+
+	if (!email || !firstName || !password || !lastName) {
 		return res.status(400).json({ message: 'No existe el campo email.' });
 	}
 
-		
+
 	const userExist = await User.findOne({ where: { email, isVerify: false } });
 	if (userExist) {
 		return res.status(400).json({ message: 'Este email ya esta registrado, pero aun no verificado.' });
@@ -66,10 +66,11 @@ const createUser = catchError(async (req, res) => {
 	const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`; // Esta URL debe ser la URL de tu aplicación frontend    
 
 	// Configurar el correo electrónico
-	const mailOptions = {
-		to: email,
-		subject: 'Verificación de Correo Electrónico Everchic',
-		html: `
+	if (email) {
+		const mailOptions = {
+			to: email,
+			subject: 'Verificación de Correo Electrónico Everchic',
+			html: `
         <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
 
@@ -420,10 +421,10 @@ const createUser = catchError(async (req, res) => {
 
 </html>
         `
-	};
-
-	// Enviar el correo electrónico de verificación
-	sendEmail(mailOptions);
+		};
+		// Enviar el correo electrónico de verificación
+		sendEmail(mailOptions);
+	}
 
 	return res.status(201).json(newUser);
 });
@@ -445,25 +446,25 @@ const verifyEmail = catchError(async (req, res) => {
 
 // Validar sesión del usuario si aún es válida con JWT
 const validateSession = catchError(async (req, res) => {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Authentication required' });
-    }
+	const authHeader = req.headers.authorization;
 
-    const token = authHeader.split(' ')[1];
+	if (!authHeader || !authHeader.startsWith('Bearer ')) {
+		return res.status(401).json({ message: 'Authentication required' });
+	}
 
-    try {
-        const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
-        if (!decoded || !decoded.user) {
-            return res.status(401).json({ message: 'Invalid authentication token' });
-        }
+	const token = authHeader.split(' ')[1];
 
-        // Si llegamos aquí, el token es válido
-        return res.status(200).json({ message: 'Session validated', user: decoded.user });
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid authentication token' });
-    }
+	try {
+		const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+		if (!decoded || !decoded.user) {
+			return res.status(401).json({ message: 'Invalid authentication token' });
+		}
+
+		// Si llegamos aquí, el token es válido
+		return res.status(200).json({ message: 'Session validated', user: decoded.user });
+	} catch (err) {
+		return res.status(401).json({ message: 'Invalid authentication token' });
+	}
 });
 
 
@@ -504,44 +505,44 @@ const update = catchError(async (req, res) => {
 });
 
 const login = catchError(async (req, res) => {
-    const { email, password } = req.body;
+	const { email, password } = req.body;
 
-    // Validar entradas
-    if (!email || !password) {
-        return res.status(400).json({ message: "Email y contraseña son requeridos." });
-    }
+	// Validar entradas
+	if (!email || !password) {
+		return res.status(400).json({ message: "Email y contraseña son requeridos." });
+	}
 
-    // Comprobamos si existe el usuario
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-        return res.status(401).json({ message: "Credenciales inválidas." });
-    }
+	// Comprobamos si existe el usuario
+	const user = await User.findOne({ where: { email } });
+	if (!user) {
+		return res.status(401).json({ message: "Credenciales inválidas." });
+	}
 
-    // Comprobamos si el usuario está verificado
-    if (!user.isVerify) {
-        return res.status(401).json({ message: "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo." });
-    }
+	// Comprobamos si el usuario está verificado
+	if (!user.isVerify) {
+		return res.status(401).json({ message: "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo." });
+	}
 
-    // Comprobamos si la contraseña es válida
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-        return res.status(401).json({ message: "Credenciales inválidas." });
-    }
+	// Comprobamos si la contraseña es válida
+	const isValid = await bcrypt.compare(password, user.password);
+	if (!isValid) {
+		return res.status(401).json({ message: "Credenciales inválidas." });
+	}
 
-    // Generar el token JWT
-    const token = jwt.sign(
-        { userId: user.id }, // Solo incluir la información mínima necesaria
-        process.env.TOKEN_SECRET,
-        { expiresIn: '1d' }
-    );
+	// Generar el token JWT
+	const token = jwt.sign(
+		{ userId: user.id }, // Solo incluir la información mínima necesaria
+		process.env.TOKEN_SECRET,
+		{ expiresIn: '1d' }
+	);
 
-    return res.json({ user, token });
+	return res.json({ user, token });
 });
 
 
 //Endpoint Resend msj verification
 const resendVerification = catchError(async (req, res) => {
-	const { email } = req.body;	
+	const { email } = req.body;
 	const user = await User.findOne({ where: { email } });
 	if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 	const verificationToken = generateVerificationToken();

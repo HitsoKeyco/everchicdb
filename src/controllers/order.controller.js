@@ -10,7 +10,8 @@ const sequelize = require('../utils/connection');
 const { sendMessageWhatsapp } = require('../sendOrderWhatsapp');
 const Product = require('../models/Product');
 const { validationCart } = require('../utils/validationCart');
-const { createUser } = require('./user.controller');
+const { createUser } = require('../utils/createUser');
+
 
 
 const getAll = catchError(async (req, res) => {

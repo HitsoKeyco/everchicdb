@@ -5,9 +5,9 @@ const generateVerificationToken = require("./verifyToken");
 const bcrypt = require('bcrypt')
 
 
-const createUser = async( data ) => {
-	
-	const { dni, phone_first, phone_second, city, address, firstName, lastName, email, password } = data;
+const createUser = async (userData) => {
+
+	const { dni, phone_first, phone_second, city, address, firstName, lastName, email, password } = userData;
 
 	const hashPassword = await bcrypt.hash(password, 10);
 	//Verificar si es que el usuario ya existe en la base de datos 
@@ -39,10 +39,11 @@ const createUser = async( data ) => {
 	const verificationLink = `${process.env.FRONTEND_URL}/verify/${verificationToken}`; // Esta URL debe ser la URL de tu aplicación frontend    
 
 	// Configurar el correo electrónico
-	const mailOptions = {
-		to: email,
-		subject: 'Verificación de Correo Electrónico Everchic',
-		html: `
+	if (email) {
+		const mailOptions = {
+			to: email,
+			subject: 'Verificación de Correo Electrónico Everchic',
+			html: `
         <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
 
@@ -393,12 +394,13 @@ const createUser = async( data ) => {
 
 </html>
         `
-	};
+		};
 
-	// Enviar el correo electrónico de verificación
-	sendEmail(mailOptions);
+		// Enviar el correo electrónico de verificación
+		sendEmail(mailOptions);
+	}
 
 	return newUser
 };
 
-module.exports =  { createUser }
+module.exports = { createUser }
