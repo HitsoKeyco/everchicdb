@@ -1,18 +1,12 @@
-// Importa el modelo de usuario y la conexión a la base de datos
-const User = require('../models/User');
-const sequelize = require('../utils/connection');
+const User = require('../models/User'); // Importa el modelo de usuario
 
 // Función para buscar al usuario por el token de verificación
 const findUserByVerificationToken = async (verificationToken) => {
     try {
         // Realiza la consulta a la base de datos para encontrar al usuario con el token de verificación proporcionado
         const user = await User.findOne({ where: { verificationToken: verificationToken } });
-        //verificar si el token aun es valido 
-        if (user && user.verificationTokenExpires > Date.now()) {
-            return user;
-        } else {
-            return null;
-        }
+
+        return user; // Devuelve el usuario encontrado o null si no existe
 
     } catch (error) {
         console.error('Error al buscar al usuario por el token de verificación:', error);

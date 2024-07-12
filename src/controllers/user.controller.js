@@ -426,6 +426,7 @@ const createUser = catchError(async (req, res) => {
 // Controlador para manejar la solicitud de verificación de correo electrónico
 const verifyEmail = catchError(async (req, res) => {
 	const { id } = req.params;
+	console.log(id);
 	const user = await findUserByVerificationToken(id);
 	if (user) {
 		await markUserAsVerified(user.id);
