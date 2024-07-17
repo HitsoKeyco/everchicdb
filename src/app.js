@@ -21,7 +21,7 @@ app.use(helmet({
 
 //Configuración de CORS
 app.use(cors({
-    origin: ['https://www.everchic.ec','https://everchic.ec', 'http://localhost:3000/admin', 'http://localhost:5173'], // Permite solicitudes solo desde este dominio
+    origin: ['https://www.everchic.ec','https://everchic.ec', 'http://localhost:3000/admin', 'http://localhost:5173', 'http://localhost:3000'], // Permite solicitudes solo desde este dominio
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
     allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
     credentials: true // Permite enviar cookies de autenticación

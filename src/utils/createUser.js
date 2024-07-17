@@ -10,23 +10,7 @@ const createUser = async (userData) => {
 	const { dni, phone_first, phone_second, city, address, firstName, lastName, email, password } = userData;
 
 	const hashPassword = await bcrypt.hash(password, 10);
-	//Verificar si es que el usuario ya existe en la base de datos 
-
-	if (!email || !firstName || !password || !phone_first || !dni || !city || !address || !lastName) {
-		return res.status(400).json({ message: 'Por favor llene el formulario.' });
-	}
-
-	const userExist = await User.findOne({ where: { email, isVerify: false } });
-	if (userExist) {
-		return res.status(400).json({ message: 'Este email ya esta registrado, pero aun no verificado.' });
-	}
-	// Si isVerify es true retornar este usuario ya esta registrado
-	const userExistAndVerify = await User.findOne({ where: { email, isVerify: true } });
-	if (userExistAndVerify) {
-		return res.status(400).json({ message: 'Este email ya esta registrado y verificado, inicia sesión' });
-	}
-
-	// Crear el usuario en la base de datos
+		// Crear el usuario en la base de datos
 	const newUser = await User.create({ dni, phone_first, phone_second, city, address, firstName, lastName, email, password: hashPassword, rol: 'client' });
 
 	// Generar un token de verificación único (utilice una librería como 'uuid' para esto)

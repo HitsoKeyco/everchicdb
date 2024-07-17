@@ -489,7 +489,7 @@ const remove = catchError(async (req, res) => {
 
 
 const update = catchError(async (req, res) => {
-	const { id } = req.params;
+	const { id } = req.params;	
 	//evita la actualizacion del email y el password
 	delete req.body.email
 	delete req.body.password

@@ -15,7 +15,7 @@ routerProduct.route('/admin')
     .get(getAllAdmin)
 
 routerProduct.route('/new_product')
-    .get(verifyJWT, getNewProduct)
+    .get(getNewProduct)
 
 routerProduct.route('/search/:id')
     .get(verifyJWT, getOne)
