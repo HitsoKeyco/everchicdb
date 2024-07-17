@@ -23,13 +23,14 @@ const create = catchError(async (req, res) => {
 
     try {
         // Aquí podrías guardar las URLs de las imágenes en la base de datos
-        const productImg = await ProductImg.create({
-            url_small: `${req.protocol}://${req.headers.host}/api/v1/uploads/images_products/small/${smallImage.filename}`,
-            url_medium: `${req.protocol}://${req.headers.host}/api/v1/uploads/images_products/medium/${mediumImage.filename}`,
-            productId,
-            // Otros campos que necesites guardar
-        });
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.headers['x-forwarded-host'] || req.headers.host;
 
+        const productImg = await ProductImg.create({
+            url_small: `${protocol}://${host}/api/v1/uploads/images_products/small/${smallImage.filename}`,
+            url_medium: `${protocol}://${host}/api/v1/uploads/images_products/medium/${mediumImage.filename}`,
+            productId,
+        });
         return res.status(201).json(productImg);
     } catch (error) {
         console.error('Error al crear la imagen del producto:', error);
