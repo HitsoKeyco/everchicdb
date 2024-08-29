@@ -3,10 +3,10 @@ const axios = require('axios');
 const sendMessageWhatsapp = async (phone, message) => {
     const urlLocal = 'http://localhost:3010/v1/send-messages';
     try {
-        const response = await axios.post(urlLocal, { phone: String(phone), message });
-        console.log('Mensaje enviado');
+        await axios.post(urlLocal, { phone: String(phone), message });       
+        
     } catch (error) {
-        console.error('No se ha podido enviar el mensaje por WhatsApp', phone, message);
+        console.error('No se ha podido enviar el mensaje por WhatsApp',error, phone, message);
     }
 }
 

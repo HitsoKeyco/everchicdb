@@ -151,28 +151,32 @@ const sendMessageToUser = async (userCartData, total) => {
             const number = userCartData.phone_first || userCartData.phone_second;
             const cleanedNumber = number.replace(/[^0-9]/g, '').slice(-9);
             const phone = `593${cleanedNumber}`;
-            const message = `Hola ${userCartData.firstName}, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!\n\n
-                *CTA ahorro: 27776464*\n
-                🏦 *BANCO GUAYAQUIL*\n
-                *Cédula:* 0953412020\n
-                👩🏻 GINA ALVARADO\n\n
-                *Correo:* EverChic.sa@gmail.com\n
-                *CTA ahorro: 2203067894*\n
-                🏦 *BANCO PICHINCHA*\n
-                *Cédula:* 0953412020\n
-                👩🏻 GINA ALVARADO\n\n
-                *Correo:* everchic.sa@gmail.com\n
-                *CTA ahorro: 1053508041*\n
-                🏦 *BANCO PACÍFICO*\n
-                *Cédula: 0953412020*\n
-                👩🏻 GINA ALVARADO\n\n
-                *Correo:* everchic.sa@gmail.com\n
-                *CTA ahorro: 20059528697*\n
-                🏦 *BANCO PRODUBANCO*\n
-                *Cédula:* 0953412020\n
-                👩🏻 GINA ALVARADO\n
+            const message = `Hola ${userCartData.firstName}, este es un mensaje automático generado por una orden de compra. El total de la compra es de $${total}. Por favor, adjunte su comprobante de pago. ¡Gracias por elegir Everchic!\n
+    *CTA ahorro: 27776464*
+    🏦 *BANCO GUAYAQUIL*
+    *Cédula:* 0953412020
+    👩🏻 GINA ALVARADO
+    *Correo:* EverChic.sa@gmail.com\n
+
+    *CTA ahorro: 2203067894*
+    🏦 *BANCO PICHINCHA*
+    *Cédula:* 0953412020
+    👩🏻 GINA ALVARADO
+    *Correo:* everchic.sa@gmail.com\n
+
+    *CTA ahorro: 1053508041*
+    🏦 *BANCO PACÍFICO*
+    *Cédula: 0953412020*
+    👩🏻 GINA ALVARADO
+    *Correo:* everchic.sa@gmail.com\n
+
+    *CTA ahorro: 20059528697*
+    🏦 *BANCO PRODUBANCO*
+    *Cédula:* 0953412020
+    👩🏻 GINA ALVARADO
+    *Correo:* everchic.sa@gmail.com\n
             `;
-            //await sendMessageWhatsapp(phone, message);
+            await sendMessageWhatsapp(phone, message);
         }
     } catch (error) {
         console.error('No se ha podido enviar el mensaje:', error);
