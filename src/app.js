@@ -31,7 +31,7 @@ app.use(limiter);
 //Configuración de CORS
 app.use(cors({
     
-    origin: ['http://localhost:3000', 'www.everchic.ec', 'everchic.ec', 'https://www.everchic.ec/whatsapp'],
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'www.everchic.ec', 'everchic.ec', 'https://www.everchic.ec/whatsapp'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
     allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
     credentials: true // Permite enviar cookies de autenticación

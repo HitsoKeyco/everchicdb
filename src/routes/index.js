@@ -29,7 +29,7 @@ const router = express.Router();
 
 router.use("/users", routerUser)    
 router.use("/admin", routerAdmin)   
-router.use("/categories", verifyJWT, routerCategory)
+router.use("/categories", routerCategory)
 router.use("/products", routerProduct)
 router.use("/product_images", routerProductImg)
 router.use("/collections", verifyJWT,routerCollection)
