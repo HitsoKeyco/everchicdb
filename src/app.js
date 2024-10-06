@@ -28,11 +28,6 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-app.use((req, res, next) => {
-    console.log('Headers:', req.headers); // Imprime las cabeceras de la solicitud
-    next();
-});
-
 //Configuración de CORS
 app.use(cors({
     
