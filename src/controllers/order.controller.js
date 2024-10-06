@@ -60,6 +60,7 @@ const create = catchError(async (req, res) => {
     try {
         const email = userCartData.email;
         let user, newUser = false;
+        let orderCreated = false; // Variable para controlar si la orden fue creada exitosamente
 
         await sequelize.transaction(async (transaction) => {
 
@@ -80,7 +81,7 @@ const create = catchError(async (req, res) => {
 
                 if (user.isVerify && token) {                    
                     try {
-                        const userId = user.id
+                        const userId = user.id;
                         await verifyJWTcart(token, userId);
                         user = await updateUser(userCartData, user, { transaction });
                     } catch (error) {
@@ -88,8 +89,6 @@ const create = catchError(async (req, res) => {
                     }
                 }
             }
-
-
 
             const orderStatus = await OrderStatus.findOne({ where: { order_status: 'pendiente' }, transaction });
             if (!orderStatus) {
@@ -104,7 +103,6 @@ const create = catchError(async (req, res) => {
                 payment_option: null,
             }, { transaction });
 
-
             const productIds = [...cart, ...cartFree].map(productData => productData.productId);
             const products = await Product.findAll({ where: { id: productIds }, transaction });
 
@@ -112,10 +110,14 @@ const create = catchError(async (req, res) => {
                 ...await processCartItems(cart, products, order.id, { transaction }),
                 ...await processCartItems(cartFree, products, order.id, { transaction }, true),
             ]);
+
+            orderCreated = true; // La orden se ha creado exitosamente
         });
 
-        // Enviar mensaje al usuario (fuera de la transacción)
-        await sendMessageToUser(userCartData, total);
+        // Enviar mensaje solo si la orden fue creada exitosamente
+        if (orderCreated) {
+            await sendMessageToUser(userCartData, total);
+        }
 
         const successMessage = `Orden creada exitosamente.${newUser ? ' No olvides verificar tu cuenta' : ''}`;
         return res.status(200).json({ message: successMessage, user });
@@ -125,6 +127,7 @@ const create = catchError(async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 });
+
 
 const processCartItems = async (cartItems, products, orderId, { transaction }, isFree = false) => {
     return Promise.all(cartItems.map(async (productData) => {
@@ -176,6 +179,7 @@ const sendMessageToUser = async (userCartData, total) => {
     👩🏻 GINA ALVARADO
     *Correo:* everchic.sa@gmail.com\n
             `;
+            //Aqui se llama la función para enviar mensaje
             await sendMessageWhatsapp(phone, message);
         }
     } catch (error) {

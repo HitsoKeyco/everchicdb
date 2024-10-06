@@ -89,8 +89,12 @@ const getAllAdmin = catchError(async (req, res) => {
 });
 
 const create = catchError(async (req, res) => {
-    const result = await Product.create(req.body);
-    return res.status(201).json(result);
+    try {
+        const result = await Product.create(req.body);
+        return res.status(201).json(result);        
+    } catch (error) {
+        return res.status(500).json({ error: 'Error creando el producto', error: error.message });
+    }
 });
 
 const getOne = catchError(async (req, res) => {

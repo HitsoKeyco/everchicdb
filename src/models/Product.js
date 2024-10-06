@@ -21,19 +21,32 @@ const Product = sequelize.define('product', {
     },
     weight:{
         type: DataTypes.DECIMAL,
-        allowNull: false
+        allowNull: false,
+        get() {
+            const rawValue = this.getDataValue('weight');
+            return parseFloat(rawValue);
+        }
     },
     cost_price: {
         type: DataTypes.DECIMAL,
-        allowNull: false
+        allowNull: false,
+        get() {
+            const rawValue = this.getDataValue('cost_price');
+            return parseFloat(rawValue);
+        }
     },
     new_product: {
         type: DataTypes.BOOLEAN,        
-        defaultValue: false
+        defaultValue: false,
+
     },
     sell_price: {
         type: DataTypes.DECIMAL,
-        allowNull: false
+        allowNull: false,
+        get() {
+            const rawValue = this.getDataValue('sell_price');
+            return parseFloat(rawValue);
+        }
     },
     deleted_at: {
         type: DataTypes.BOOLEAN,

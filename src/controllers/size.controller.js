@@ -6,8 +6,20 @@ const getAll = catchError(async(req, res) => {
     return res.json(results);
 });
 
-const create = catchError(async(req, res) => {
-    const result = await Size.create(req.body);
+const create = catchError(async (req, res) => {
+    console.log(req.body);
+
+    // Verifica que el cuerpo tenga el formato correcto
+    const { size } = req.body; // Desestructura el nombre desde el cuerpo de la solicitud
+
+    // Asegúrate de que `name` no sea vacío
+    if (!size) {
+        return res.status(400).json({ message: 'la size es requerido.' });
+    }
+
+    // Crea un nuevo registro
+    const result = await Size.create({ size }); // Envía un objeto con `name`
+
     return res.status(201).json(result);
 });
 

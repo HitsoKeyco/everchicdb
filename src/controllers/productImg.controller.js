@@ -21,11 +21,14 @@ const create = catchError(async (req, res) => {
         return res.status(400).json({ message: 'Ambos archivos de imagen son requeridos.' });
     }
 
+    const protocol = req.protocol; // Captura 'http' o 'https'
+    const host = req.headers.host; // Captura 'localhost:5000' o 'mi-dominio.com'
+
     try {
         // Aquí podrías guardar las URLs de las imágenes en la base de datos
         const productImg = await ProductImg.create({
-            url_small: `https://${req.headers.host}/api/v1/uploads/images_products/small/${smallImage.filename}`,
-            url_medium: `https://${req.headers.host}/api/v1/uploads/images_products/medium/${mediumImage.filename}`,
+            url_small: `${protocol}://${host}/api/v1/uploads/images_products/small/${smallImage.filename}`,
+            url_medium: `${protocol}://${host}/api/v1/uploads/images_products/medium/${mediumImage.filename}`,
             productId,
             // Otros campos que necesites guardar
         });

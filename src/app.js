@@ -7,6 +7,7 @@ const router = require('./routes');
 const errorHandler = require('./utils/errorHandler');
 require('dotenv').config();
 const path = require("path");
+const rateLimit = require('express-rate-limit')
 
 
 // Esta es nuestra aplicación
@@ -18,22 +19,36 @@ app.use(helmet({
     crossOriginResourcePolicy: false,
 }));
 
+//Limitar conexiones por ip
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minuto
+    max: 2000, // Limitar a 10 solicitudes por IP
+    message: 'Demasiadas solicitudes desde esta dirección IP, por favor intenta de nuevo más tarde.'
+});
+
+app.use(limiter);
+
+app.use((req, res, next) => {
+    console.log('Headers:', req.headers); // Imprime las cabeceras de la solicitud
+    next();
+});
 
 //Configuración de CORS
 app.use(cors({
-    origin: ['https://www.everchic.ec','https://everchic.ec', 'http://localhost:3000/admin', 'http://localhost:5173', 'http://localhost:3000'], // Permite solicitudes solo desde este dominio
+    
+    origin: ['http://localhost:3000', 'www.everchic.ec', 'everchic.ec', 'https://www.everchic.ec/whatsapp'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
     allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
     credentials: true // Permite enviar cookies de autenticación
 }));
 
-app.use(cors())
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/api/v1', router);
+app.use('/api/v1', express.static(path.join(__dirname, 'public')));
+app.use('/zohoverify', express.static(path.join(__dirname, 'zohoverify')));
 
-app.use('', router);
 
-app.get('/', (req, res) => {
-    return res.send("Welcome to express!");
+app.get('/get_api', (req, res) => {
+    return res.send("Has sido Hackeado 🦠🦠🦠");
 });
 
 
