@@ -1,6 +1,6 @@
 const express = require('express');
+const router = express.Router();
 const { verifyJWT } = require('../utils/VerifyJWT');
-
 const routerUser = require("./user.router");
 const routerCategory = require('./category.router');
 const routerProduct = require('./product.router');
@@ -24,7 +24,6 @@ const routerOrder = require('./order.router');
 const routerOrderStatus = require('./orderStatus.router');
 const routerOrderItem = require('./OrderItem.router');
 const routerWhatsapp = require('./whatsapp.router');
-const router = express.Router();
 
 
 router.use("/users", routerUser)    
@@ -32,12 +31,12 @@ router.use("/admin", routerAdmin)
 router.use("/categories", routerCategory)
 router.use("/products", routerProduct)
 router.use("/product_images", routerProductImg)
-router.use("/collections", verifyJWT,routerCollection)
 router.use("/message", routerChatMessage)
 router.use("/orders", routerOrder)
 router.use("/whatsapp", routerWhatsapp)
 router.use("/orders_status", routerOrderStatus)
 router.use("/orders_items", routerOrderItem)
+router.use("/collections", verifyJWT,routerCollection)
 router.use("/cart", verifyJWT,routerCart) //🔒
 router.use("/roles", verifyJWT,routerRol) //🔒
 router.use("/contacts", verifyJWT,routerContact) //🔒
